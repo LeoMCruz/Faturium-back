@@ -45,7 +45,6 @@ public class SecurityConfig{
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/user").permitAll()
                         // permitir acesso ao h2
 //                        .requestMatchers("/h2-console/**").permitAll()
 

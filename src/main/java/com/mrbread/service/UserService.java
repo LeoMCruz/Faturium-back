@@ -34,10 +34,10 @@ public class UserService {
     @Transactional
     public UserDTO salvarUser(UserDTO userDTO){
         if(userRepository.existsByLogin(userDTO.getUsername()))
-            throw new AppException("Login ja existente", "Tente novamente", HttpStatus.CONFLICT);
+            throw new AppException("Email já cadastrado.", "Tente novamente", HttpStatus.CONFLICT);
 
         if (organizacaoRepository.existsByCnpj(userDTO.getCnpj())) {
-            throw new AppException("CNPJ já cadastrado", "Verifique o CNPJ informado", HttpStatus.CONFLICT);
+            throw new AppException("CNPJ já cadastrado.", "Verifique o CNPJ informado", HttpStatus.CONFLICT);
         }
 
         Organizacao organizacao = Organizacao.builder()
@@ -74,7 +74,7 @@ public class UserService {
     @Transactional
     public UserDTO salvarColaborador(UserDTO userDTO){
         if(userRepository.existsByLogin(userDTO.getUsername()))
-            throw new AppException("Login ja existente", "Tente novamente", HttpStatus.CONFLICT);
+            throw new AppException("Email já cadastrado", "Tente novamente", HttpStatus.CONFLICT);
 
         var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Organização não encontrada",
