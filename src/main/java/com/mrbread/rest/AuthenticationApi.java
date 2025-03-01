@@ -41,12 +41,19 @@ public class AuthenticationApi {
             var authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(oauthRequest.getUsername(),
                             oauthRequest.getPassword()));
+
             var user = (User) authentication.getPrincipal();
+
+            List<String> roles = user.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList();
+
             var token = JWT.create()
                     .withClaim("id", user.getId())
                     .withSubject(oauthRequest.getUsername())
                     .withIssuedAt(new Date())
-                    .withExpiresAt(new Date(System.currentTimeMillis() + tokenExpire * 1000))
+                    .withClaim("roles", roles)
+//                    .withExpiresAt(new Date(System.currentTimeMillis() + tokenExpire * 1000))
                     .sign(Algorithm.HMAC256(tokenPassword));
             var response = AuthenticationResponse.builder().accessToken(token).build();
             return ResponseEntity.status(HttpStatus.OK).body(response);

@@ -13,12 +13,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -29,7 +27,7 @@ public class UserApi {
 
     @PostMapping(value = "/user", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> createuser(@RequestBody UserDTO userDTO){
-        return ResponseEntity.status(HttpStatus.OK).body(userService.salvarUser(userDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.salvarUser(userDTO));
     }
 
     @PostMapping(value = "/user/colaborador", consumes = "application/json", produces = "application/json")
@@ -39,9 +37,10 @@ public class UserApi {
                     "O usuário não possui permissão para criar novos usuarios na organização",
                     HttpStatus.FORBIDDEN);
         }
-        return ResponseEntity.status(HttpStatus.OK).body(userService.salvarColaborador(userDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.salvarColaborador(userDTO));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping(value = "/user", produces = "application/json")
     public ResponseEntity<OrgUserDTO> getAuthenticatedUser(){
         return ResponseEntity.ok(userService.getUserInfo());
@@ -49,12 +48,24 @@ public class UserApi {
 
     @GetMapping(value = "/user/colaborador", produces = "application/json")
     public ResponseEntity<List<OrgUserDTO>> getAllOrgUsers(@PageableDefault(sort = "nome", direction = Sort.Direction.ASC) Pageable pageable){
-        if(!SecurityUtils.isAdmin() && SecurityUtils.isManager()){
+        if(!SecurityUtils.isAdmin() && !SecurityUtils.isManager()){
             throw new AppException("Operação não permitida",
                     "O usuário não possui permissão para acessar os dados dos usuários da organização",
                     HttpStatus.FORBIDDEN);
         }
         return ResponseEntity.ok(userService.getAllOrganizationUsers());
     }
+
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
+    @PutMapping(value = "/user", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> updateUser(@RequestBody UserDTO userDTO){
+        if(!userDTO.getUsername().equals(SecurityUtils.getEmail()) || !SecurityUtils.isAdmin()){
+            throw new AppException("Operação não permitida",
+                    "O usuário não possui permissão para modificar os dados de usuários",
+                    HttpStatus.FORBIDDEN);
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userDTO));
+    }
+
 }
 

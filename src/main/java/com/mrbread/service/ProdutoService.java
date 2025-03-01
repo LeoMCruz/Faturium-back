@@ -53,4 +53,39 @@ public class ProdutoService {
     public void deleteProduto(Long id){
         produtoRepository.deleteById(id);
     }
+
+    @Transactional
+    public ProdutoDTO updateProduto(ProdutoDTO produtoDTO){
+        if(produtoDTO.getId() == null){
+            throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
+        }
+
+        var getProduto = produtoRepository.findById(produtoDTO.getId());
+
+        if(getProduto.isEmpty()){
+            throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
+        }
+
+        Produto produto = getProduto.get();
+
+        if(produtoDTO.getNomeProduto() != null && !produtoDTO.getNomeProduto().isEmpty()){
+            produto.setNomeProduto(produtoDTO.getNomeProduto());
+        }
+
+        if(produtoDTO.getDescricao() != null && !produtoDTO.getDescricao().isEmpty()){
+            produto.setDescricao(produtoDTO.getDescricao());
+        }
+
+        if(produtoDTO.getPrecoBase() != null){
+            produto.setPrecoBase(produtoDTO.getPrecoBase());
+        }
+
+        produtoRepository.save(produto);
+        return ProdutoDTO.builder()
+                .id(produto.getId())
+                .nomeProduto(produto.getNomeProduto())
+                .descricao(produto.getDescricao())
+                .precoBase(produto.getPrecoBase())
+                .build();
+    }
 }

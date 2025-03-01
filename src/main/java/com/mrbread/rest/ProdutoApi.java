@@ -31,7 +31,7 @@ public class ProdutoApi {
                     HttpStatus.FORBIDDEN);
         }
         produtoDTO.setOrganizacaoId(SecurityUtils.obterOrganizacaoId());
-        return ResponseEntity.status(HttpStatus.OK).body(produtoService.salvarProduto(produtoDTO));
+        return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.salvarProduto(produtoDTO));
     }
 
     @GetMapping(value = "/produtos", produces = "application/json")
@@ -50,7 +50,7 @@ public class ProdutoApi {
             .orElseThrow(() -> new AppException("Produto não encontrado",
                 "ID do produto inválido",
                 HttpStatus.NOT_FOUND));
-        if(!produto.getOrganizacao().getId().equals(SecurityUtils.obterOrganizacaoId())){
+        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
             throw new AppException("Operação não permitida",
                     "O produto não pertence à sua organização",
                     HttpStatus.FORBIDDEN);

@@ -69,6 +69,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         if(!user.isEnabled()){
             throw new DisabledException("Usuário está inativo");
         }
-        return new UsernamePasswordAuthenticationToken(user,null, user.getAuthorities());
+        List<SimpleGrantedAuthority> authorities = value.getClaim("roles").asList(String.class)
+                .stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+
+        return new UsernamePasswordAuthenticationToken(user,null, authorities);
     }
 }

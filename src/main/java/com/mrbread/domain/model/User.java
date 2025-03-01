@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Entity;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.*;
 
 @Entity
 @Data
@@ -40,7 +40,11 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        if(this.perfilAcesso == PerfilAcesso.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), 
+                new SimpleGrantedAuthority("ROLE_MANAGER"), new SimpleGrantedAuthority("ROLE_DEFAULT"));
+        else if (this.perfilAcesso == PerfilAcesso.MANAGER)  return List.of(new SimpleGrantedAuthority("ROLE_MANAGER"),
+                new SimpleGrantedAuthority("ROLE_DEFAULT"));
+        else return List.of(new SimpleGrantedAuthority("ROLE_DEFAULT"));
     }
 
     @Override

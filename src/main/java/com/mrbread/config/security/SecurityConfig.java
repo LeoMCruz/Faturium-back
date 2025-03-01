@@ -25,7 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig{
 
     private final JwtUserDetailsService JWTUserDetailsService;
@@ -43,7 +43,7 @@ public class SecurityConfig{
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acesso público ao endpoint de login e criação de usuário
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/login").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
                         // permitir acesso ao h2
 //                        .requestMatchers("/h2-console/**").permitAll()

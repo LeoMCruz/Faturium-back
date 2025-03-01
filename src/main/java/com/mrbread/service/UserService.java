@@ -127,9 +127,7 @@ public class UserService {
     //busca todos os usuarios da organização
     @Transactional(readOnly = true)
     public List<OrgUserDTO> getAllOrganizationUsers(){
-        log.info("{}", SecurityUtils.obterOrganizacaoId());
         List<User> usuarios = userRepository.findByOrganizacaoIdOrg(SecurityUtils.obterOrganizacaoId());
-        log.info("Quantidade de usuários encontrados: {}", usuarios.size());
         return userRepository.findByOrganizacaoIdOrg(SecurityUtils.obterOrganizacaoId()).stream()
                 .map(user -> OrgUserDTO.builder()
                         .id(user.getId())
@@ -140,4 +138,40 @@ public class UserService {
                         .build()).toList();
     }
 
+    // permite alterar senha e nome do usuário
+    @Transactional
+    public UserDTO updateUser(UserDTO userDTO){
+        if(userDTO.getUsername() == null){
+            throw new AppException("Usuário inexistente", "Email inválido", HttpStatus.BAD_REQUEST);
+        }
+
+        var getuser = userRepository.findByLogin(userDTO.getUsername());
+        if(getuser.isEmpty()){
+            throw new AppException("Usuário não encontrado", "Verifique o email", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = getuser.get();
+
+        if(userDTO.getNome() != null && !userDTO.getNome().isEmpty()){
+            user.setNome(userDTO.getNome());
+        }
+
+        if(userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()){
+            user.setSenha(passwordEncoder.encode(user.getSenha()));
+        }
+
+        if(userDTO.getPerfilAcesso() != null && SecurityUtils.isAdmin()){
+            user.setPerfilAcesso(userDTO.getPerfilAcesso());
+        }
+
+        userRepository.save(user);
+
+        return UserDTO.builder()
+                .id(user.getId())
+                .nome(user.getNome())
+                .username(user.getUsername())
+                .perfilAcesso(user.getPerfilAcesso())
+                .status(user.getStatus())
+                .build();
+    }
 }
