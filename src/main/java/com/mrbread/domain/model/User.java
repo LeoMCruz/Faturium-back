@@ -19,9 +19,9 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 public class User implements UserDetails {
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Id
-    private Long id;
+    private UUID id;
     @Column
     private String senha;
     @Column(unique = true)

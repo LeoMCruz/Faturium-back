@@ -2,7 +2,6 @@ package com.mrbread.rest;
 
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
-import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.repository.ProdutoRepository;
 import com.mrbread.dto.ProdutoDTO;
 import com.mrbread.service.ProdutoService;
@@ -16,46 +15,36 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
-public class ProdutoApi {
+public class ProdutoController {
     private final ProdutoService produtoService;
     private final ProdutoRepository produtoRepository;
 
+    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @PostMapping(value = "/produtos", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> createProduct (@RequestBody ProdutoDTO produtoDTO){
-        if(!SecurityUtils.isAdmin() && !SecurityUtils.isManager()){
-            throw new AppException("Operação não permitida",
-                    "O usuário não possui permissão para adicionar produtos",
-                    HttpStatus.FORBIDDEN);
-        }
-        produtoDTO.setOrganizacaoId(SecurityUtils.obterOrganizacaoId());
         return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.salvarProduto(produtoDTO));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/produtos", produces = "application/json")
     public ResponseEntity<List<ProdutoDTO>> getProducts(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(produtoService.buscarTodosProdutosOrganizacao(SecurityUtils.obterOrganizacaoId(), pageable));
+        return ResponseEntity.ok(produtoService.buscarTodosProdutosOrganizacao(pageable));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping(value = "/produtos/{id}", produces = "application/json")
-    public ResponseEntity<?> deleteProduct(@PathVariable Long id){
-        if(!SecurityUtils.isAdmin()){
-            throw new AppException("Operação não permitida",
-                    "O usuário não possui permissão para deletar",
-                    HttpStatus.FORBIDDEN);
-        }
-        var produto = produtoRepository.findById(id)
-            .orElseThrow(() -> new AppException("Produto não encontrado",
-                "ID do produto inválido",
-                HttpStatus.NOT_FOUND));
-        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O produto não pertence à sua organização",
-                    HttpStatus.FORBIDDEN);
-        }
+    public ResponseEntity<?> deleteProduct(@PathVariable UUID id){
         produtoService.deleteProduto(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PutMapping(value = "/produtos/{id}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<ProdutoDTO> updateProdutct(@RequestBody ProdutoDTO produtoDTO, @PathVariable UUID id){
+        return ResponseEntity.ok().body(produtoService.updateProduto(id, produtoDTO));
     }
 }

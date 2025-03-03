@@ -127,8 +127,7 @@ public class UserService {
     //busca todos os usuarios da organização
     @Transactional(readOnly = true)
     public List<OrgUserDTO> getAllOrganizationUsers(){
-        List<User> usuarios = userRepository.findByOrganizacaoIdOrg(SecurityUtils.obterOrganizacaoId());
-        return userRepository.findByOrganizacaoIdOrg(SecurityUtils.obterOrganizacaoId()).stream()
+        return userRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(), Status.ATIVO).stream()
                 .map(user -> OrgUserDTO.builder()
                         .id(user.getId())
                         .nome(user.getNome())
@@ -141,11 +140,18 @@ public class UserService {
     // permite alterar senha e nome do usuário
     @Transactional
     public UserDTO updateUser(UserDTO userDTO){
+        if(!userDTO.getUsername().equals(SecurityUtils.getEmail()) || !SecurityUtils.isAdmin()){
+            throw new AppException("Operação não permitida",
+                    "O usuário não possui permissão para modificar os dados de usuários",
+                    HttpStatus.FORBIDDEN);
+        }
+
         if(userDTO.getUsername() == null){
             throw new AppException("Usuário inexistente", "Email inválido", HttpStatus.BAD_REQUEST);
         }
 
         var getuser = userRepository.findByLogin(userDTO.getUsername());
+
         if(getuser.isEmpty()){
             throw new AppException("Usuário não encontrado", "Verifique o email", HttpStatus.BAD_REQUEST);
         }

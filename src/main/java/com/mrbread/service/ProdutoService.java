@@ -1,7 +1,9 @@
 package com.mrbread.service;
 
 import com.mrbread.config.exception.AppException;
+import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Produto;
+import com.mrbread.domain.model.Status;
 import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.ProdutoRepository;
 import com.mrbread.dto.ProdutoDTO;
@@ -23,7 +25,7 @@ public class ProdutoService {
 
     @Transactional
     public ProdutoDTO salvarProduto(ProdutoDTO produtoDTO){
-        var organizacao = organizacaoRepository.findByIdOrg(produtoDTO.getOrganizacaoId())
+        var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Organização não encontrada",
                         "ID de organização inválido",
                         HttpStatus.NOT_FOUND));
@@ -33,40 +35,68 @@ public class ProdutoService {
                 .nomeProduto(produtoDTO.getNomeProduto())
                 .descricao(produtoDTO.getDescricao())
                 .precoBase(produtoDTO.getPrecoBase())
+                .status(Status.ATIVO)
                 .organizacao(organizacao)
                 .build();
-        produtoRepository.save(produto);
-        return produtoDTO;
-    }
 
-    @Transactional(readOnly = true)
-    public List<ProdutoDTO> buscarTodosProdutosOrganizacao(UUID organizacaoId, Pageable pageable){
-        return produtoRepository.findByOrganizacaoIdOrg(organizacaoId, pageable).stream().map(produto -> ProdutoDTO.builder()
+        produtoRepository.save(produto);
+
+        return ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())
+                .status(produto.getStatus())
+                .organizacaoId(produto.getOrganizacao().getIdOrg())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable){
+        return produtoRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(), Status.ATIVO, pageable).stream().map(produto -> ProdutoDTO.builder()
+                .id(produto.getId())
+                .nomeProduto(produto.getNomeProduto())
+                .descricao(produto.getDescricao())
+                .precoBase(produto.getPrecoBase())
+                .status(produto.getStatus())
+                .organizacaoId(produto.getOrganizacao().getIdOrg())
                 .build()).collect(Collectors.toList());
     }
 
     @Transactional
-    public void deleteProduto(Long id){
-        produtoRepository.deleteById(id);
+    public void deleteProduto(UUID id){
+        var produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new AppException("Produto não encontrado",
+                        "ID do produto inválido",
+                        HttpStatus.NOT_FOUND));
+        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
+            throw new AppException("Operação não permitida",
+                    "O produto não pertence à sua organização",
+                    HttpStatus.FORBIDDEN);
+        }
+        produto.setStatus(Status.INATIVO);
+        produtoRepository.save(produto);
     }
 
     @Transactional
-    public ProdutoDTO updateProduto(ProdutoDTO produtoDTO){
-        if(produtoDTO.getId() == null){
+    public ProdutoDTO updateProduto(UUID id, ProdutoDTO produtoDTO){
+        if(id == null){
             throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
         }
 
-        var getProduto = produtoRepository.findById(produtoDTO.getId());
+        var getProduto = produtoRepository.findById(id);
 
         if(getProduto.isEmpty()){
             throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
         }
 
         Produto produto = getProduto.get();
+
+        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
+            throw new AppException("Operação não permitida",
+                    "O Produto não pertence à sua organização",
+                    HttpStatus.BAD_REQUEST);
+        }
 
         if(produtoDTO.getNomeProduto() != null && !produtoDTO.getNomeProduto().isEmpty()){
             produto.setNomeProduto(produtoDTO.getNomeProduto());
@@ -80,12 +110,17 @@ public class ProdutoService {
             produto.setPrecoBase(produtoDTO.getPrecoBase());
         }
 
+        if(produtoDTO.getStatus() !=null){
+            produto.setStatus(produtoDTO.getStatus());
+        }
+
         produtoRepository.save(produto);
         return ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())
+                .status(produto.getStatus())
                 .build();
     }
 }

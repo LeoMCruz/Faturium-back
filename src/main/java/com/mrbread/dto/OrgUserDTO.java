@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrgUserDTO {
-    private Long id;
+    private UUID id;
     private String username;
     private String nome;
     private Status status;

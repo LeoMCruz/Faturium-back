@@ -1,5 +1,7 @@
 package com.mrbread.dto;
 
+import com.mrbread.domain.model.Status;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,9 +16,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ProdutoDTO {
-    private Long id;
+    private UUID id;
     private String nomeProduto;
     private String descricao;
     private BigDecimal precoBase;
     private UUID organizacaoId;
+    private Status status;
 }

@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-    private Long id;
+    private UUID id;
     @NotBlank(message = "A senha é obrigatória")
     private String password;
     @NotBlank(message = "O email é obrigatório")

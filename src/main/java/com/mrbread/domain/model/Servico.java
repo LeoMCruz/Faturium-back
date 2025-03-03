@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -15,12 +16,17 @@ import java.math.BigDecimal;
 @Builder
 public class Servico {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     @Column
     private String nomeServico;
     @Column
     private String descricao;
     @Column
     private BigDecimal precoBase;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "organizacao_id", referencedColumnName = "idOrg")
+    private Organizacao organizacao;
+    @Column
+    private Status status;
 }

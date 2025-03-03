@@ -8,17 +8,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.UUID;
 
 public class SecurityUtils {
+    public static Authentication auth(){
+        return SecurityContextHolder.getContext().getAuthentication();
+    }
+
     public static UUID obterOrganizacaoId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User user) {
+        if (auth() != null && auth().getPrincipal() instanceof User user) {
             return user.getOrganizacao().getIdOrg();
         }
         throw new IllegalStateException("Usuário não autenticado ou inválido");
     }
 
     public static PerfilAcesso perfilAcesso() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if(auth != null && auth.getPrincipal() instanceof User user){
+        if(auth() != null && auth().getPrincipal() instanceof User user){
             return user.getPerfilAcesso();
         }
         throw new IllegalStateException("Usuário não autenticado ou inválido");
@@ -38,8 +40,7 @@ public class SecurityUtils {
     }
 
     public static String getEmail(){
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if(auth != null && auth.getPrincipal() instanceof User user){
+        if(auth() != null && auth().getPrincipal() instanceof User user){
             return user.getLogin();
         }
         throw new IllegalStateException("Usuário não autenticado ou inválido");

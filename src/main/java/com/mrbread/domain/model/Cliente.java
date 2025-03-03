@@ -1,13 +1,11 @@
 package com.mrbread.domain.model;
 
 import jakarta.persistence.*;
-import jdk.jfr.Registered;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -15,19 +13,30 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Produto {
+public class Cliente {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     @Column
-    private String nomeProduto;
+    private String nomeFantasia;
     @Column
-    private String descricao;
+    private String razaoSocial;
     @Column
-    private BigDecimal precoBase;
+    private String cnpj;
+    @Column
+    private String endereco;
+    @Column
+    private String cidade;
+    @Column
+    private String estado;
+    @Column
+    private String email;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organizacao_id", referencedColumnName = "idOrg")
     private Organizacao organizacao;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_criacao", referencedColumnName = "login")
+    private User usuarioCriacao;
     @Column
     private Status status;
 }
