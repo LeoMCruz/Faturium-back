@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +47,8 @@ public class UserService {
                     .cnpj(userDTO.getCnpj())
                     .status(Status.ATIVO)
                     .usuarios(new HashSet<>())
+                    .dataCriacao(LocalDateTime.now())
+                    .dataAlteracao(LocalDateTime.now())
                     .build();
             organizacaoRepository.save(organizacao);
 
@@ -57,6 +60,8 @@ public class UserService {
                 .status(Status.ATIVO)
                 .perfilAcesso(PerfilAcesso.ADMIN)
                 .organizacao(organizacao)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
                 .build();
 
         userRepository.save(user);
@@ -67,6 +72,7 @@ public class UserService {
                 .nome(user.getNome())
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
                 .organizacaoId(organizacao.getIdOrg())
+                .dataCriacao(user.getDataCriacao())
                 .build();
     }
 
@@ -88,6 +94,8 @@ public class UserService {
                 .status(userDTO.getStatus())
                 .perfilAcesso(userDTO.getPerfilAcesso())
                 .organizacao(organizacao)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
                 .build();
 
         userRepository.save(user);
@@ -98,6 +106,7 @@ public class UserService {
                 .nome(user.getNome())
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
                 .organizacaoId(organizacao.getIdOrg())
+                .dataCriacao(user.getDataCriacao())
                 .build();
     }
 
@@ -121,6 +130,8 @@ public class UserService {
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
                 .organizacaoId(organizacao.getIdOrg())
                 .cnpj(organizacao.getCnpj())
+                .dataCriacao(user.getDataCriacao())
+                .dataAlteracao(user.getDataAlteracao())
                 .build();
     }
 
@@ -134,6 +145,8 @@ public class UserService {
                         .username(user.getUsername())
                         .perfilAcesso(user.getPerfilAcesso())
                         .status(user.getStatus())
+                        .dataCriacao(user.getDataCriacao())
+                        .dataAlteracao(user.getDataAlteracao())
                         .build()).toList();
     }
 
@@ -170,6 +183,8 @@ public class UserService {
             user.setPerfilAcesso(userDTO.getPerfilAcesso());
         }
 
+        user.setDataAlteracao(LocalDateTime.now());
+
         userRepository.save(user);
 
         return UserDTO.builder()
@@ -178,6 +193,8 @@ public class UserService {
                 .username(user.getUsername())
                 .perfilAcesso(user.getPerfilAcesso())
                 .status(user.getStatus())
+                .dataCriacao(user.getDataCriacao())
+                .dataAlteracao(user.getDataAlteracao())
                 .build();
     }
 }

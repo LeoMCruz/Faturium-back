@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,6 +39,8 @@ public class ServicoService {
                 .precoBase(servicoDTO.getPrecoBase())
                 .status(Status.ATIVO)
                 .organizacao(organizacao)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
                 .build();
 
         servicoRepository.save(servico);
@@ -47,6 +51,7 @@ public class ServicoService {
                 .descricao(servico.getDescricao())
                 .precoBase(servico.getPrecoBase())
                 .status(servico.getStatus())
+                .dataCriacao(servico.getDataCriacao())
                 .build();
     }
 
@@ -59,6 +64,8 @@ public class ServicoService {
                         .descricao(servico.getDescricao())
                         .precoBase(servico.getPrecoBase())
                         .status(servico.getStatus())
+                        .dataCriacao(servico.getDataCriacao())
+                        .dataAlteracao(servico.getDataAlteracao())
                         .build()
         ).collect(Collectors.toList());
     }
@@ -74,23 +81,17 @@ public class ServicoService {
                     "O serviço não pertence à sua organização",
                     HttpStatus.FORBIDDEN);
         }
+        servico.setDataAlteracao(LocalDateTime.now());
         servico.setStatus(Status.INATIVO);
         servicoRepository.save(servico);
     }
 
     @Transactional
     public ServicoDTO alteraServico(UUID id, ServicoDTO servicoDTO){
-        if(id == null){
-            throw new AppException("Servico não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
-        }
-
-        var getServico = servicoRepository.findById(id);
-
-        if(getServico.isEmpty()){
-            throw new AppException("Servico não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
-        }
-
-        Servico servico = getServico.get();
+        var servico = servicoRepository.findById(id).orElseThrow(() -> new AppException(
+                "Serviço não encontrado",
+                "ID do serviço é inválido",
+                HttpStatus.NOT_FOUND));
 
         if(!servico.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
             throw new AppException("Operação não permitida",
@@ -98,21 +99,19 @@ public class ServicoService {
                     HttpStatus.BAD_REQUEST);
         }
 
-        if(servicoDTO.getNomeServico() != null && !servico.getNomeServico().isEmpty()){
-            servico.setNomeServico(servicoDTO.getNomeServico());
-        }
+        Optional.ofNullable(servicoDTO.getNomeServico())
+                        .filter(nome -> !nome.isEmpty())
+                        .ifPresent(servico::setNomeServico);
 
-        if(servicoDTO.getDescricao() != null && !servicoDTO.getDescricao().isEmpty()){
-            servico.setDescricao(servicoDTO.getDescricao());
-        }
+        Optional.ofNullable(servicoDTO.getDescricao())
+                        .filter(descricao -> !descricao.isEmpty())
+                        .ifPresent(servico::setDescricao);
 
-        if(servicoDTO.getPrecoBase() != null){
-            servico.setPrecoBase(servicoDTO.getPrecoBase());
-        }
+        Optional.ofNullable(servicoDTO.getPrecoBase())
+                        .ifPresent(servico::setPrecoBase);
 
-        if(servicoDTO.getStatus() != null){
-            servico.setStatus(servicoDTO.getStatus());
-        }
+
+        servico.setDataAlteracao(LocalDateTime.now());
 
         servicoRepository.save(servico);
 
@@ -122,6 +121,8 @@ public class ServicoService {
                 .descricao(servico.getDescricao())
                 .status(servico.getStatus())
                 .precoBase(servico.getPrecoBase())
+                .dataCriacao(servico.getDataCriacao())
+                .dataAlteracao(servico.getDataAlteracao())
                 .build();
     }
 

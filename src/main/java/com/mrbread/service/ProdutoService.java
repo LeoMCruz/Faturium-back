@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -37,6 +39,8 @@ public class ProdutoService {
                 .precoBase(produtoDTO.getPrecoBase())
                 .status(Status.ATIVO)
                 .organizacao(organizacao)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
                 .build();
 
         produtoRepository.save(produto);
@@ -48,6 +52,7 @@ public class ProdutoService {
                 .precoBase(produto.getPrecoBase())
                 .status(produto.getStatus())
                 .organizacaoId(produto.getOrganizacao().getIdOrg())
+                .dataCriacao(produto.getDataCriacao())
                 .build();
     }
 
@@ -60,6 +65,8 @@ public class ProdutoService {
                 .precoBase(produto.getPrecoBase())
                 .status(produto.getStatus())
                 .organizacaoId(produto.getOrganizacao().getIdOrg())
+                .dataCriacao(produto.getDataCriacao())
+                .dataAlteracao(produto.getDataAlteracao())
                 .build()).collect(Collectors.toList());
     }
 
@@ -74,23 +81,17 @@ public class ProdutoService {
                     "O produto não pertence à sua organização",
                     HttpStatus.FORBIDDEN);
         }
+        produto.setDataAlteracao(LocalDateTime.now());
         produto.setStatus(Status.INATIVO);
         produtoRepository.save(produto);
     }
 
     @Transactional
     public ProdutoDTO updateProduto(UUID id, ProdutoDTO produtoDTO){
-        if(id == null){
-            throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
-        }
-
-        var getProduto = produtoRepository.findById(id);
-
-        if(getProduto.isEmpty()){
-            throw new AppException("Produto não encontrado", "ID inválido", HttpStatus.BAD_REQUEST);
-        }
-
-        Produto produto = getProduto.get();
+        var produto = produtoRepository.findById(id).orElseThrow(()-> new AppException(
+                "Produto não encontrado",
+                "ID do produto inválido",
+                HttpStatus.NOT_FOUND));
 
         if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
             throw new AppException("Operação não permitida",
@@ -98,29 +99,29 @@ public class ProdutoService {
                     HttpStatus.BAD_REQUEST);
         }
 
-        if(produtoDTO.getNomeProduto() != null && !produtoDTO.getNomeProduto().isEmpty()){
-            produto.setNomeProduto(produtoDTO.getNomeProduto());
-        }
+        Optional.ofNullable(produtoDTO.getNomeProduto())
+                .filter(nome -> !nome.isEmpty())
+                .ifPresent(produto::setNomeProduto);
 
-        if(produtoDTO.getDescricao() != null && !produtoDTO.getDescricao().isEmpty()){
-            produto.setDescricao(produtoDTO.getDescricao());
-        }
+        Optional.ofNullable(produtoDTO.getDescricao())
+                .filter(descricao -> !descricao.isEmpty())
+                .ifPresent(produto::setDescricao);
 
-        if(produtoDTO.getPrecoBase() != null){
-            produto.setPrecoBase(produtoDTO.getPrecoBase());
-        }
+        Optional.ofNullable(produtoDTO.getPrecoBase())
+                        .ifPresent(produto::setPrecoBase);
 
-        if(produtoDTO.getStatus() !=null){
-            produto.setStatus(produtoDTO.getStatus());
-        }
+        produto.setDataAlteracao(LocalDateTime.now());
 
         produtoRepository.save(produto);
+
         return ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())
                 .status(produto.getStatus())
+                .dataCriacao(produto.getDataCriacao())
+                .dataAlteracao(produto.getDataAlteracao())
                 .build();
     }
 }

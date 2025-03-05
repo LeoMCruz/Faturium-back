@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,7 +29,7 @@ public class UserDTO {
     private PerfilAcesso perfilAcesso;
     private UUID organizacaoId;
     private String nomeOrganizacao;
-    @Pattern(regexp = "^(\\d{2})\\.(\\d{3})\\.(\\d{3})\\/\\d{4}\\-\\d{2}$",
-            message = "CNPJ inválido. O formato deve ser XX.XXX.XXX/XXXX-XX")
     private String cnpj;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAlteracao;
 }

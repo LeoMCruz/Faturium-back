@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import jakarta.persistence.*;
 import jakarta.persistence.Entity;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -37,6 +38,10 @@ public class User implements UserDetails {
     @Column
     @Enumerated
     private Status status;
+    @Column
+    private LocalDateTime dataCriacao;
+    @Column
+    private LocalDateTime dataAlteracao;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

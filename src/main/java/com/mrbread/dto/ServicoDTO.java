@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -21,4 +22,6 @@ public class ServicoDTO {
     private BigDecimal precoBase;
     private UUID organizacaoId;
     private Status status;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAlteracao;
 }

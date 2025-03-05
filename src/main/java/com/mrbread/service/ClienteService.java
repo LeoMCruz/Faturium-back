@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -49,6 +51,8 @@ public class ClienteService {
                 .organizacao(organizacao)
                 .usuarioCriacao(user)
                 .status(Status.ATIVO)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
                 .build();
 
         clienteRepository.save(cliente);
@@ -65,6 +69,8 @@ public class ClienteService {
                 .organizacao(cliente.getOrganizacao().getIdOrg())
                 .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
                 .status(cliente.getStatus())
+                .dataCriacao(cliente.getDataCriacao())
+                .dataAlteracao(cliente.getDataAlteracao())
                 .build();
     }
 
@@ -82,6 +88,8 @@ public class ClienteService {
                         .razaoSocial(cliente.getRazaoSocial())
                         .organizacao(cliente.getOrganizacao().getIdOrg())
                         .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
+                        .dataCriacao(cliente.getDataCriacao())
+                        .dataAlteracao(cliente.getDataAlteracao())
                         .status(cliente.getStatus())
                         .build()).collect(Collectors.toList());
     }
@@ -100,7 +108,65 @@ public class ClienteService {
                     HttpStatus.FORBIDDEN
             );
         }
+        cliente.setDataAlteracao(LocalDateTime.now());
         cliente.setStatus(Status.INATIVO);
         clienteRepository.save(cliente);
+    }
+
+    @Transactional
+    public ClienteDTO alteraCliente(UUID id, ClienteDTO clienteDTO){
+        var cliente = clienteRepository.findById(id).orElseThrow(()-> new AppException("Cliente não localizado",
+                "O ID não corresponde ao cliente" ,
+                HttpStatus.NOT_FOUND));
+
+        if (!cliente.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
+            throw new AppException("Operação não permitida",
+                    "O cliente informado não pertence a carteira de clientes da Organização ",
+                    HttpStatus.FORBIDDEN);
+        }
+
+        Optional.ofNullable(clienteDTO.getCidade())
+                .filter(cidade -> !cidade.isEmpty())
+                .ifPresent(cliente::setCidade);
+
+        Optional.ofNullable(clienteDTO.getEmail())
+                .filter(email -> !email.isEmpty())
+                .ifPresent(cliente::setEmail);
+
+        Optional.ofNullable(clienteDTO.getEndereco())
+                .filter(endereco -> !endereco.isEmpty())
+                .ifPresent(cliente::setEndereco);
+
+        Optional.ofNullable(clienteDTO.getEstado())
+                .filter(estado -> !estado.isEmpty())
+                .ifPresent(cliente::setEstado);
+
+        Optional.ofNullable(clienteDTO.getNomeFantasia())
+                .filter(nome -> !nome.isEmpty())
+                .ifPresent(cliente::setNomeFantasia);
+
+        Optional.ofNullable(clienteDTO.getRazaoSocial())
+                .filter(nome -> !nome.isEmpty())
+                .ifPresent(cliente::setRazaoSocial);
+
+        cliente.setDataAlteracao(LocalDateTime.now());
+
+        clienteRepository.save(cliente);
+
+        return ClienteDTO.builder()
+                .id(cliente.getId())
+                .nomeFantasia(cliente.getNomeFantasia())
+                .email(cliente.getEmail())
+                .cnpj(cliente.getCnpj())
+                .cidade(cliente.getCidade())
+                .estado(cliente.getEstado())
+                .endereco(cliente.getEndereco())
+                .razaoSocial(cliente.getRazaoSocial())
+                .organizacao(cliente.getOrganizacao().getIdOrg())
+                .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
+                .status(cliente.getStatus())
+                .dataCriacao(cliente.getDataCriacao())
+                .dataAlteracao(cliente.getDataAlteracao())
+                .build();
     }
 }

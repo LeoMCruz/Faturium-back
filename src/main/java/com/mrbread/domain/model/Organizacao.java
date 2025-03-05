@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -31,4 +32,8 @@ public class Organizacao {
     @OneToMany(mappedBy = "organizacao")
     @ToString.Exclude
     private Set<Produto> produto = new HashSet<>();
+    @Column
+    private LocalDateTime dataCriacao;
+    @Column
+    private LocalDateTime dataAlteracao;
 }

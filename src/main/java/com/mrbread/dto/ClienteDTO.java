@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -30,4 +31,6 @@ public class ClienteDTO {
     private UUID organizacao;
     private String usuarioCriacao;
     private Status status;
+    private LocalDateTime dataCriacao;
+    private LocalDateTime dataAlteracao;
 }
