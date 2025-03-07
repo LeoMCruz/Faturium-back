@@ -9,6 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ProdutoRepository extends JpaRepository<Produto, UUID> {
-    Page<Produto> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
+public interface ProdutoRepository extends PertenceOrganizacaoRespository<Produto, UUID> {
+//    Page<Produto> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
 }

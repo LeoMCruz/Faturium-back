@@ -12,6 +12,7 @@ import com.mrbread.dto.OrgUserDTO;
 import com.mrbread.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -137,8 +138,8 @@ public class UserService {
 
     //busca todos os usuarios da organização
     @Transactional(readOnly = true)
-    public List<OrgUserDTO> getAllOrganizationUsers(){
-        return userRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(), Status.ATIVO).stream()
+    public List<OrgUserDTO> getAllOrganizationUsers(Pageable pageable){
+        return userRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
                 .map(user -> OrgUserDTO.builder()
                         .id(user.getId())
                         .nome(user.getNome())
@@ -153,23 +154,20 @@ public class UserService {
     // permite alterar senha e nome do usuário
     @Transactional
     public UserDTO updateUser(UserDTO userDTO){
+        if(userDTO.getUsername() == null){
+            throw new AppException("Usuário inexistente", "Email inválido", HttpStatus.BAD_REQUEST);
+        }
+
         if(!userDTO.getUsername().equals(SecurityUtils.getEmail()) || !SecurityUtils.isAdmin()){
             throw new AppException("Operação não permitida",
                     "O usuário não possui permissão para modificar os dados de usuários",
                     HttpStatus.FORBIDDEN);
         }
 
-        if(userDTO.getUsername() == null){
-            throw new AppException("Usuário inexistente", "Email inválido", HttpStatus.BAD_REQUEST);
-        }
-
-        var getuser = userRepository.findByLogin(userDTO.getUsername());
-
-        if(getuser.isEmpty()){
-            throw new AppException("Usuário não encontrado", "Verifique o email", HttpStatus.BAD_REQUEST);
-        }
-
-        User user = getuser.get();
+        var user = userRepository.findByLoginAndOrganizacaoIdOrg(userDTO.getUsername(), SecurityUtils.obterOrganizacaoId())
+                .orElseThrow(() -> new AppException("Usuário não encontrado",
+                                "Email inválido",
+                                HttpStatus.NOT_FOUND));
 
         if(userDTO.getNome() != null && !userDTO.getNome().isEmpty()){
             user.setNome(userDTO.getNome());

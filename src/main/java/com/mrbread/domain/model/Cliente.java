@@ -14,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Cliente {
+public class Cliente implements PertenceOrganizacao{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

@@ -57,7 +57,7 @@ public class ServicoService {
 
     @Transactional(readOnly = true)
     public List<ServicoDTO> buscarServicosOrganizacao(Pageable pageable){
-        return servicoRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(),Status.ATIVO ,pageable).stream().map(
+        return servicoRepository.findAll(SecurityUtils.obterOrganizacaoId(),pageable).stream().map(
                 servico -> ServicoDTO.builder()
                         .id(servico.getId())
                         .nomeServico(servico.getNomeServico())
@@ -72,15 +72,10 @@ public class ServicoService {
 
     @Transactional
     public void deleteServico(UUID id){
-        var servico = servicoRepository.findById(id)
+        var servico = servicoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Serviço não encontrado",
                         "ID do serviço é inválido",
                         HttpStatus.NOT_FOUND));
-        if(!servico.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O serviço não pertence à sua organização",
-                    HttpStatus.FORBIDDEN);
-        }
         servico.setDataAlteracao(LocalDateTime.now());
         servico.setStatus(Status.INATIVO);
         servicoRepository.save(servico);
@@ -88,16 +83,10 @@ public class ServicoService {
 
     @Transactional
     public ServicoDTO alteraServico(UUID id, ServicoDTO servicoDTO){
-        var servico = servicoRepository.findById(id).orElseThrow(() -> new AppException(
+        var servico = servicoRepository.findById(id, SecurityUtils.obterOrganizacaoId()).orElseThrow(() -> new AppException(
                 "Serviço não encontrado",
                 "ID do serviço é inválido",
                 HttpStatus.NOT_FOUND));
-
-        if(!servico.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O Serviço não pertence à sua organização",
-                    HttpStatus.BAD_REQUEST);
-        }
 
         Optional.ofNullable(servicoDTO.getNomeServico())
                         .filter(nome -> !nome.isEmpty())

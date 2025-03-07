@@ -25,8 +25,9 @@ public class ProdutoController {
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @PostMapping(value = "/produtos", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> createProduct (@RequestBody ProdutoDTO produtoDTO){
-        return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.salvarProduto(produtoDTO));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProdutoDTO createProduct (@RequestBody ProdutoDTO produtoDTO){
+        return produtoService.salvarProduto(produtoDTO);
     }
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
@@ -37,9 +38,9 @@ public class ProdutoController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping(value = "/produtos/{id}", produces = "application/json")
-    public ResponseEntity<?> deleteProduct(@PathVariable UUID id){
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(@PathVariable UUID id){
         produtoService.deleteProduto(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")

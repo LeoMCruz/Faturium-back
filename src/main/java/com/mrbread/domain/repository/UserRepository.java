@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends PertenceOrganizacaoRespository<User, UUID> {
     Optional<User> findByLogin(String login);
+    Optional<User> findByLoginAndOrganizacaoIdOrg(String login, UUID idOrg);
     boolean existsByLogin(String login);
-    List<User> findByOrganizacaoIdOrgAndStatus(UUID organizacaoIdOrg, Status status);
 }

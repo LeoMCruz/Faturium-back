@@ -10,6 +10,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
-    Page<Cliente> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
+public interface ClienteRepository extends PertenceOrganizacaoRespository<Cliente, UUID> {
 }

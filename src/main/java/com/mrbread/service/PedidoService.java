@@ -3,8 +3,6 @@ package com.mrbread.service;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Pedido;
-import com.mrbread.domain.model.Produto;
-import com.mrbread.domain.model.Servico;
 import com.mrbread.domain.model.Status;
 import com.mrbread.domain.repository.*;
 import com.mrbread.dto.PedidoDTO;
@@ -37,7 +35,9 @@ public class PedidoService {
                     HttpStatus.BAD_REQUEST);
         }
         boolean todosClientesIguais = pedidoDTO.stream()
-                .allMatch(dto -> dto.getCliente().equals(pedidoDTO.getFirst().getCliente()));
+                .map(PedidoDTO::getCliente)
+                .distinct()
+                .count() == 1;
 
         if (!todosClientesIguais) {
             throw new AppException(
@@ -58,7 +58,7 @@ public class PedidoService {
                         "ID de organizacao inválido",
                         HttpStatus.NOT_FOUND));
 
-        var cliente = clienteRepository.findById(pedidoDTO.getFirst().getCliente())
+        var cliente = clienteRepository.findById(pedidoDTO.get(0).getCliente())
                 .orElseThrow(()-> new AppException("Cliente não encontrado",
                         "ID do cliente é inválido",
                         HttpStatus.NOT_FOUND));
@@ -67,35 +67,35 @@ public class PedidoService {
 
         List<Pedido> pedidos = pedidoDTO.stream().map(item -> {
             validarItem(item.getProduto(), item.getServico(), item.getQuantidade(), item.getPrecoUnitario());
-//            if (item.getProduto() == null && item.getServico() == null) {
-//                throw new AppException(
-//                        "Nenhum serviço ou produto informados",
-//                        "Verifique os dados enviados",
-//                        HttpStatus.BAD_REQUEST
-//                );
-//            }
-//            if(item.getProduto() != null && item.getServico() != null){
-//                throw new AppException(
-//                        "Configuração inválida",
-//                        "Deve ser definido OU um produto OU um serviço, não ambos",
-//                        HttpStatus.BAD_REQUEST
-//                );
-//            }
-//            if (item.getQuantidade().compareTo(BigDecimal.ZERO) <= 0) {
-//                throw new AppException(
-//                        "Quantidade inválida",
-//                        "A quantidade deve ser maior que zero",
-//                        HttpStatus.BAD_REQUEST
-//                );
-//            }
-//
-//            if (item.getPrecoUnitario().compareTo(BigDecimal.ZERO) < 0) {
-//                throw new AppException(
-//                        "Preço inválido",
-//                        "O preço não pode ser negativo",
-//                        HttpStatus.BAD_REQUEST
-//                );
-//            }
+            if (item.getProduto() == null && item.getServico() == null) {
+                throw new AppException(
+                        "Nenhum serviço ou produto informados",
+                        "Verifique os dados enviados",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+            if(item.getProduto() != null && item.getServico() != null){
+                throw new AppException(
+                        "Configuração inválida",
+                        "Deve ser definido OU um produto OU um serviço, não ambos",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+            if (item.getQuantidade().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new AppException(
+                        "Quantidade inválida",
+                        "A quantidade deve ser maior que zero",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+
+            if (item.getPrecoUnitario().compareTo(BigDecimal.ZERO) < 0) {
+                throw new AppException(
+                        "Preço inválido",
+                        "O preço não pode ser negativo",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
 
             return Pedido.builder()
                     .id(item.getId())

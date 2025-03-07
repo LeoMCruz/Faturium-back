@@ -41,7 +41,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping(value = "/user/colaborador", produces = "application/json")
     public ResponseEntity<List<OrgUserDTO>> getAllOrgUsers(@PageableDefault(sort = "nome", direction = Sort.Direction.ASC) Pageable pageable){
-        return ResponseEntity.ok(userService.getAllOrganizationUsers());
+        return ResponseEntity.ok(userService.getAllOrganizationUsers(pageable));
     }
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")

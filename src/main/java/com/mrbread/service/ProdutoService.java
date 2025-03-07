@@ -58,7 +58,7 @@ public class ProdutoService {
 
     @Transactional(readOnly = true)
     public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable){
-        return produtoRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(), Status.ATIVO, pageable).stream().map(produto -> ProdutoDTO.builder()
+        return produtoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(produto -> ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
@@ -72,15 +72,15 @@ public class ProdutoService {
 
     @Transactional
     public void deleteProduto(UUID id){
-        var produto = produtoRepository.findById(id)
+        var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Produto não encontrado",
                         "ID do produto inválido",
                         HttpStatus.NOT_FOUND));
-        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O produto não pertence à sua organização",
-                    HttpStatus.FORBIDDEN);
-        }
+//        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
+//            throw new AppException("Operação não permitida",
+//                    "O produto não pertence à sua organização",
+//                    HttpStatus.FORBIDDEN);
+//        }
         produto.setDataAlteracao(LocalDateTime.now());
         produto.setStatus(Status.INATIVO);
         produtoRepository.save(produto);
@@ -88,16 +88,10 @@ public class ProdutoService {
 
     @Transactional
     public ProdutoDTO updateProduto(UUID id, ProdutoDTO produtoDTO){
-        var produto = produtoRepository.findById(id).orElseThrow(()-> new AppException(
-                "Produto não encontrado",
-                "ID do produto inválido",
-                HttpStatus.NOT_FOUND));
-
-        if(!produto.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O Produto não pertence à sua organização",
-                    HttpStatus.BAD_REQUEST);
-        }
+        var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
+                .orElseThrow(() -> new AppException("Produto não encontrado",
+                        "ID do produto inválido",
+                        HttpStatus.NOT_FOUND));
 
         Optional.ofNullable(produtoDTO.getNomeProduto())
                 .filter(nome -> !nome.isEmpty())

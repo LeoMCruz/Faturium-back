@@ -13,13 +13,14 @@ import jakarta.persistence.Entity;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User implements UserDetails {
+public class User implements UserDetails, PertenceOrganizacao {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Id
     private UUID id;
@@ -45,11 +46,14 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(this.perfilAcesso == PerfilAcesso.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), 
-                new SimpleGrantedAuthority("ROLE_MANAGER"), new SimpleGrantedAuthority("ROLE_DEFAULT"));
-        else if (this.perfilAcesso == PerfilAcesso.MANAGER)  return List.of(new SimpleGrantedAuthority("ROLE_MANAGER"),
-                new SimpleGrantedAuthority("ROLE_DEFAULT"));
-        else return List.of(new SimpleGrantedAuthority("ROLE_DEFAULT"));
+//        if(this.perfilAcesso == PerfilAcesso.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
+//                new SimpleGrantedAuthority("ROLE_MANAGER"), new SimpleGrantedAuthority("ROLE_DEFAULT"));
+//        else if (this.perfilAcesso == PerfilAcesso.MANAGER)  return List.of(new SimpleGrantedAuthority("ROLE_MANAGER"),
+//                new SimpleGrantedAuthority("ROLE_DEFAULT"));
+//        else return List.of(new SimpleGrantedAuthority("ROLE_DEFAULT"));
+        return this.perfilAcesso.getRoles().stream().map(
+                SimpleGrantedAuthority::new
+        ).collect(Collectors.toList());
     }
 
     @Override

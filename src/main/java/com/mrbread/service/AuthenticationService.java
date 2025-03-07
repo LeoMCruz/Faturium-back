@@ -52,6 +52,7 @@ public class AuthenticationService {
                     .withSubject(oauthRequest.getUsername())
                     .withIssuedAt(new Date())
                     .withClaim("roles", roles)
+                    .withAudience(user.getOrganizacao().getIdOrg().toString())
 //                    .withExpiresAt(new Date(System.currentTimeMillis() + tokenExpire * 1000))
                     .sign(Algorithm.HMAC256(tokenPassword));
             return AuthenticationResponse.builder().accessToken(token).build();

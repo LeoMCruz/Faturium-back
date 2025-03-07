@@ -10,6 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface ServicoRepository extends JpaRepository<Servico, UUID> {
-    Page<Servico> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
+public interface ServicoRepository extends PertenceOrganizacaoRespository<Servico, UUID> {
+//    Page<Servico> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
 }

@@ -76,7 +76,7 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public List<ClienteDTO> buscarClientesOrganizacao(Pageable pageable){
-        return clienteRepository.findByOrganizacaoIdOrgAndStatus(SecurityUtils.obterOrganizacaoId(), Status.ATIVO, pageable).stream()
+        return clienteRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
                 .map(cliente -> ClienteDTO.builder()
                         .id(cliente.getId())
                         .nomeFantasia(cliente.getNomeFantasia())
@@ -96,18 +96,11 @@ public class ClienteService {
 
     @Transactional
     public void deleteCliente(UUID id){
-        var cliente = clienteRepository.findById(id).orElseThrow(() -> new AppException(
+        var cliente = clienteRepository.findById(id, SecurityUtils.obterOrganizacaoId()).orElseThrow(() -> new AppException(
                 "Cliente não encontrado",
                 "O ID informado é inválido",
                 HttpStatus.FORBIDDEN
         ));
-        if(!cliente.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException(
-                    "Operação não permitida",
-                    "O cliente informado não pertence a carteira de clientes da Organização",
-                    HttpStatus.FORBIDDEN
-            );
-        }
         cliente.setDataAlteracao(LocalDateTime.now());
         cliente.setStatus(Status.INATIVO);
         clienteRepository.save(cliente);
@@ -115,15 +108,11 @@ public class ClienteService {
 
     @Transactional
     public ClienteDTO alteraCliente(UUID id, ClienteDTO clienteDTO){
-        var cliente = clienteRepository.findById(id).orElseThrow(()-> new AppException("Cliente não localizado",
-                "O ID não corresponde ao cliente" ,
-                HttpStatus.NOT_FOUND));
-
-        if (!cliente.getOrganizacao().getIdOrg().equals(SecurityUtils.obterOrganizacaoId())){
-            throw new AppException("Operação não permitida",
-                    "O cliente informado não pertence a carteira de clientes da Organização ",
-                    HttpStatus.FORBIDDEN);
-        }
+        var cliente = clienteRepository.findById(id, SecurityUtils.obterOrganizacaoId()).orElseThrow(() -> new AppException(
+                "Cliente não encontrado",
+                "O ID informado é inválido",
+                HttpStatus.FORBIDDEN
+        ));
 
         Optional.ofNullable(clienteDTO.getCidade())
                 .filter(cidade -> !cidade.isEmpty())

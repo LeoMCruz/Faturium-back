@@ -1,6 +1,8 @@
 package com.mrbread.config.security.JWT;
 
+import com.mrbread.config.exception.AppException;
 import com.mrbread.domain.model.Organizacao;
+import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.model.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,9 +27,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -64,15 +65,34 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private UsernamePasswordAuthenticationToken createToken(DecodedJWT value) {
-        User user = userRepository.findByLogin(value.getSubject())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
-        if(!user.isEnabled()){
-            throw new DisabledException("Usuário está inativo");
-        }
-        List<SimpleGrantedAuthority> authorities = value.getClaim("roles").asList(String.class)
+//        User user = userRepository.findByLogin(value.getSubject())
+//                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+
+        User user = new User();
+        user.setId(UUID.fromString(value.getClaim("id").asString()));
+        user.setOrganizacao(Organizacao.builder()
+                        .idOrg(UUID.fromString(value.getAudience().get(0)))
+                .build());
+        user.setLogin(value.getSubject());
+//        if(!user.isEnabled()){
+//            throw new DisabledException("Usuário está inativo");
+//        }
+        var roleList = value.getClaim("roles").asList(String.class);
+
+        List<SimpleGrantedAuthority> authorities = roleList
                 .stream()
                 .map(SimpleGrantedAuthority::new)
                 .toList();
+
+        var perfilAcesso = Arrays.stream(PerfilAcesso.values())
+                .filter(x -> x.getRoles().equals(roleList))
+                .findFirst().orElseThrow(() -> new AppException("Invalid Access",
+                        "Roles dont match",
+                        HttpStatus.FORBIDDEN));
+
+        user.setPerfilAcesso(perfilAcesso);
+
+
 
         return new UsernamePasswordAuthenticationToken(user,null, authorities);
     }
