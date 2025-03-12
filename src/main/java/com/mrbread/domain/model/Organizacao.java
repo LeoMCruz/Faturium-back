@@ -15,9 +15,7 @@ import java.util.UUID;
 @Builder
 public class Organizacao {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Column(unique = true)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID idOrg;
     @Column
     private String nomeOrganizacao;

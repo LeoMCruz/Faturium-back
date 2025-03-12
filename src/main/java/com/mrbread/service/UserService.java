@@ -44,7 +44,6 @@ public class UserService {
 
         Organizacao organizacao = Organizacao.builder()
                     .nomeOrganizacao(userDTO.getNomeOrganizacao())
-                    .idOrg(UUID.randomUUID())
                     .cnpj(userDTO.getCnpj())
                     .status(Status.ATIVO)
                     .usuarios(new HashSet<>())

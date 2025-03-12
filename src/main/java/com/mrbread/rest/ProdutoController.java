@@ -6,7 +6,9 @@ import com.mrbread.domain.repository.ProdutoRepository;
 import com.mrbread.dto.ProdutoDTO;
 import com.mrbread.service.ProdutoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +27,16 @@ public class ProdutoController {
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @PostMapping(value = "/produtos", consumes = "application/json", produces = "application/json")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ProdutoDTO createProduct (@RequestBody ProdutoDTO produtoDTO){
-        return produtoService.salvarProduto(produtoDTO);
+//    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<?> createProduct (@RequestBody ProdutoDTO produtoDTO){
+        return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.salvarProduto(produtoDTO));
     }
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/produtos", produces = "application/json")
-    public ResponseEntity<List<ProdutoDTO>> getProducts(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok(produtoService.buscarTodosProdutosOrganizacao(pageable));
+    public ResponseEntity<List<ProdutoDTO>> getProducts(@PageableDefault(sort = {"nomeProduto", "id"},
+            direction = Sort.Direction.ASC) Pageable pageable, @RequestParam(required = false) String search){
+        return ResponseEntity.ok(produtoService.buscarTodosProdutosOrganizacao(pageable, search));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

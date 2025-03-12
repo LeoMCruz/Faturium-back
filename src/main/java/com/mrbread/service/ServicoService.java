@@ -56,8 +56,22 @@ public class ServicoService {
     }
 
     @Transactional(readOnly = true)
-    public List<ServicoDTO> buscarServicosOrganizacao(Pageable pageable){
-        return servicoRepository.findAll(SecurityUtils.obterOrganizacaoId(),pageable).stream().map(
+    public List<ServicoDTO> buscarServicosOrganizacao(Pageable pageable, String search){
+        if(search == null || search.isEmpty()) {
+            return servicoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(
+                    servico -> ServicoDTO.builder()
+                            .id(servico.getId())
+                            .nomeServico(servico.getNomeServico())
+                            .descricao(servico.getDescricao())
+                            .precoBase(servico.getPrecoBase())
+                            .status(servico.getStatus())
+                            .dataCriacao(servico.getDataCriacao())
+                            .dataAlteracao(servico.getDataAlteracao())
+                            .build()
+            ).collect(Collectors.toList());
+        }
+        var searchForQuery = "%"+search+"%";
+        return servicoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery).stream().map(
                 servico -> ServicoDTO.builder()
                         .id(servico.getId())
                         .nomeServico(servico.getNomeServico())

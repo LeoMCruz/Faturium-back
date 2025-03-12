@@ -57,8 +57,21 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable){
-        return produtoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(produto -> ProdutoDTO.builder()
+    public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable, String search){
+        if(search == null || search.isEmpty()) {
+            return produtoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(produto -> ProdutoDTO.builder()
+                    .id(produto.getId())
+                    .nomeProduto(produto.getNomeProduto())
+                    .descricao(produto.getDescricao())
+                    .precoBase(produto.getPrecoBase())
+                    .status(produto.getStatus())
+                    .organizacaoId(produto.getOrganizacao().getIdOrg())
+                    .dataCriacao(produto.getDataCriacao())
+                    .dataAlteracao(produto.getDataAlteracao())
+                    .build()).collect(Collectors.toList());
+        }
+        var searchForQuery = "%"+search+"%";
+        return produtoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery).stream().map(produto -> ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())

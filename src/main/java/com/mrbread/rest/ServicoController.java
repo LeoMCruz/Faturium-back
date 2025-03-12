@@ -5,6 +5,7 @@ import com.mrbread.dto.ServicoDTO;
 import com.mrbread.service.ServicoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,9 @@ public class ServicoController {
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/servicos", produces = "application/json")
-    public ResponseEntity<List<ServicoDTO>> getServices(@PageableDefault Pageable pageable){
-        return ResponseEntity.ok().body(servicoService.buscarServicosOrganizacao(pageable));
+    public ResponseEntity<List<ServicoDTO>> getServices(@PageableDefault(sort = {"nomeServico", "id"},
+            direction = Sort.Direction.ASC) Pageable pageable, @RequestParam(required = false) String search){
+        return ResponseEntity.ok().body(servicoService.buscarServicosOrganizacao(pageable, search));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

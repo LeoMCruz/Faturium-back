@@ -23,7 +23,7 @@ public class OrganizacaoService {
     @Transactional
     public OrganizacaoDTO atualizarOrganizacao(OrganizacaoDTO organizacaoDTO){
         var organizacao = Organizacao.builder()
-                .id(organizacaoDTO.getId())
+                .idOrg(organizacaoDTO.getId())
                 .nomeOrganizacao(organizacaoDTO.getNomeOrganizacao())
                 .idOrg(organizacaoDTO.getIdOrg())
                 .status(organizacaoDTO.getStatus())

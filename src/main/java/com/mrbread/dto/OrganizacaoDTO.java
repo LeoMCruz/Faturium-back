@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrganizacaoDTO {
-    private Long id;
+    private UUID id;
     private String nomeOrganizacao;
     private UUID idOrg;
     private String cnpj;
