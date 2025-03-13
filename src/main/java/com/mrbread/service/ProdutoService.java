@@ -8,6 +8,9 @@ import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.ProdutoRepository;
 import com.mrbread.dto.ProdutoDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final OrganizacaoRepository organizacaoRepository;
 
+    @CacheEvict(value = "produtos", allEntries = true)
     @Transactional
     public ProdutoDTO salvarProduto(ProdutoDTO produtoDTO){
         var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
@@ -56,6 +60,7 @@ public class ProdutoService {
                 .build();
     }
 
+    @Cacheable("produtos")
     @Transactional(readOnly = true)
     public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable, String search){
         if(search == null || search.isEmpty()) {
@@ -83,6 +88,7 @@ public class ProdutoService {
                 .build()).collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "produtos", allEntries = true)
     @Transactional
     public void deleteProduto(UUID id){
         var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
@@ -99,6 +105,7 @@ public class ProdutoService {
         produtoRepository.save(produto);
     }
 
+    @CacheEvict(value = "produtos", allEntries = true)
     @Transactional
     public ProdutoDTO updateProduto(UUID id, ProdutoDTO produtoDTO){
         var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
