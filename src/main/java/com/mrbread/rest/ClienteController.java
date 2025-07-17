@@ -4,6 +4,8 @@ import com.mrbread.dto.ClienteDTO;
 import com.mrbread.service.ClienteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +27,8 @@ public class ClienteController {
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/clientes", produces = "application/json")
-    public ResponseEntity<List<ClienteDTO>> getClients (Pageable pageable){
+    public ResponseEntity<List<ClienteDTO>> getClients (@PageableDefault(sort = {"nomeFantasia", "id"},
+            direction = Sort.Direction.ASC) Pageable pageable){
         return ResponseEntity.ok().body(clienteService.buscarClientesOrganizacao(pageable));
     }
 

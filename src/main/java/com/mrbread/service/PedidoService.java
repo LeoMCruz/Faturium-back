@@ -2,157 +2,231 @@ package com.mrbread.service;
 
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
-import com.mrbread.domain.model.Pedido;
-import com.mrbread.domain.model.Status;
+import com.mrbread.domain.model.*;
 import com.mrbread.domain.repository.*;
+import com.mrbread.dto.ItemPedidoDTO;
 import com.mrbread.dto.PedidoDTO;
+import com.mrbread.dto.ResumoPedidoDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PedidoService {
-    private final PedidoRepository pedidoRepository;
-    private final UserRepository userRepository;
-    private final OrganizacaoRepository organizacaoRepository;
-    private final ClienteRepository clienteRepository;
-    private final ProdutoRepository produtoRepository;
-    private final ServicoRepository servicoRepository;
+        private final PedidoRepository pedidoRepository;
+        private final UserRepository userRepository;
+        private final OrganizacaoRepository organizacaoRepository;
+        private final ClienteRepository clienteRepository;
+        private final ProdutoRepository produtoRepository;
+        private final ServicoRepository servicoRepository;
+        private final PedidoIdService pedidoIdService;
 
-    @Transactional
-    public List<Pedido> criarPedido(List<PedidoDTO> pedidoDTO){
-        if (pedidoDTO == null || pedidoDTO.isEmpty()) {
-            throw new AppException("Lista de pedidos vazia",
-                    "Nenhum pedido foi enviado",
-                    HttpStatus.BAD_REQUEST);
+        @Transactional
+        public PedidoDTO criarPedido(PedidoDTO pedidoDto) {
+                if (pedidoDto == null || pedidoDto.getItens() == null || pedidoDto.getItens().isEmpty()) {
+                        throw new AppException(
+                                "Itens do pedido vazios",
+                                "Nenhum item foi enviado",
+                                HttpStatus.BAD_REQUEST);
+                }
+
+                User usuario = userRepository.findByLogin(SecurityUtils.getEmail())
+                                .orElseThrow(() -> new AppException(
+                                        "Usuário não encontrado",
+                                        "O usuário é inválido",
+                                        HttpStatus.NOT_FOUND));
+
+                Organizacao org = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
+                                .orElseThrow(() -> new AppException(
+                                        "Organização não encontrada",
+                                        "ID de organização inválido",
+                                        HttpStatus.NOT_FOUND));
+
+                Cliente cliente = clienteRepository.findById(pedidoDto.getCliente())
+                                .orElseThrow(() -> new AppException(
+                                        "Cliente não encontrado",
+                                        "ID do cliente é inválido",
+                                        HttpStatus.NOT_FOUND));
+
+                Long idPedido = pedidoIdService.gerarProximoIdPedido();
+
+                Pedido pedido = Pedido.builder()
+                        .idPedido(idPedido)
+                        .user(usuario)
+                        .organizacao(org)
+                        .cliente(cliente)
+                        .nomeFantasiaCliente(cliente.getNomeFantasia())
+                        .status(Status.ATIVO)
+                        .dataCriacao(LocalDateTime.now())
+                        .dataAlteracao(LocalDateTime.now())
+                        .itens(new ArrayList<>())
+                        .build();
+
+                List<ItemPedido> itens = pedidoDto.getItens().stream()
+                        .map(item -> {
+                                validarItem(
+                                        item.getProduto() != null ? item.getProduto() : null,
+                                        item.getServico() != null ? item.getServico() : null,
+                                        item.getQuantidade(),
+                                        item.getPrecoUnitario());
+
+                                Produto produto = Optional.ofNullable(item.getProduto())
+                                        .flatMap(id -> produtoRepository.findById(
+                                                id, SecurityUtils.obterOrganizacaoId()))
+                                        .orElse(null);
+
+                                Servico servico = Optional.ofNullable(item.getServico())
+                                        .flatMap(id -> servicoRepository.findById(
+                                                id, SecurityUtils.obterOrganizacaoId()))
+                                        .orElse(null);
+
+                            return ItemPedido.builder()
+                                    .nome(produto != null ? produto.getNomeProduto() : servico.getNomeServico())
+                                    .descricao(produto != null ? produto.getDescricao() : servico.getDescricao())
+                                    .tipo(produto != null? "Produto" : "Serviço")
+                                    .pedido(pedido)
+                                    .produto(produto)
+                                    .servico(servico)
+                                    .quantidade(item.getQuantidade())
+                                    .precoUnitario(item.getPrecoUnitario())
+                                    .precoTotal(item.getQuantidade()
+                                            .multiply(item.getPrecoUnitario()))
+                                    .status(Status.ATIVO)
+                                    .build();
+                        }).collect(Collectors.toList());
+
+                pedido.setItens(itens);
+
+                BigDecimal total = itens.stream()
+                        .filter(itemPedido -> itemPedido.getStatus() == Status.ATIVO)
+                        .map(ItemPedido::getPrecoTotal)
+                        .map(value -> value != null ? value : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                pedido.setPrecoTotal(total);
+
+                Pedido salvarPedido = pedidoRepository.save(pedido);
+
+                List<ItemPedidoDTO> itensDtoResponse = salvarPedido.getItens().stream()
+                        .map(item -> ItemPedidoDTO.builder()
+                                .produto(
+                                        Optional.ofNullable(item.getProduto())
+                                                .map(Produto::getId)
+                                                .orElse(null))
+                                .servico(
+                                        Optional.ofNullable(item.getServico())
+                                                .map(Servico::getId)
+                                                .orElse(null))
+                                .quantidade(item.getQuantidade())
+                                .nome(item.getNome())
+                                .descricao(item.getDescricao())
+                                .tipo(item.getTipo())
+                                .precoUnitario(item.getPrecoUnitario())
+                                .precoTotal(item.getPrecoTotal())
+                                .build())
+                        .collect(Collectors.toList());
+
+                return PedidoDTO.builder()
+                        .id(salvarPedido.getId())
+                        .idPedido(salvarPedido.getIdPedido())
+                        .itens(itensDtoResponse)
+                        .precoTotal(salvarPedido.getPrecoTotal())
+                        .organizacao(salvarPedido.getOrganizacao().getIdOrg())
+                        .user(salvarPedido.getUser().getLogin())
+                        .cliente(salvarPedido.getCliente().getId())
+                        .nomeFantasiaCliente(cliente.getNomeFantasia())
+                        .status(salvarPedido.getStatus())
+                        .dataCriacao(salvarPedido.getDataCriacao())
+                        .dataAlteracao(salvarPedido.getDataAlteracao())
+                        .build();
         }
-        boolean todosClientesIguais = pedidoDTO.stream()
-                .map(PedidoDTO::getCliente)
-                .distinct()
-                .count() == 1;
 
-        if (!todosClientesIguais) {
-            throw new AppException(
-                    "Clientes diferentes",
-                    "Todos os pedidos devem ser para o mesmo cliente",
-                    HttpStatus.BAD_REQUEST
-            );
+        private void validarItem(UUID produto, UUID servico, BigDecimal quantidade, BigDecimal preco) {
+                if (produto == null && servico == null) {
+                        throw new AppException(
+                                "Nenhum serviço ou produto informados",
+                                "Verifique os dados enviados",
+                                HttpStatus.BAD_REQUEST);
+                }
+                if (produto != null && servico != null) {
+                        throw new AppException(
+                                "Configuração inválida",
+                                "Deve ser definido OU um produto OU um serviço, não ambos",
+                                HttpStatus.BAD_REQUEST);
+                }
+                if (quantidade.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new AppException(
+                                "Quantidade inválida",
+                                "A quantidade deve ser maior que zero",
+                                HttpStatus.BAD_REQUEST);
+                }
+
+                if (preco.compareTo(BigDecimal.ZERO) < 0) {
+                        throw new AppException(
+                                "Preço inválido",
+                                "O preço não pode ser negativo",
+                                HttpStatus.BAD_REQUEST);
+                }
         }
 
-        var email = userRepository.findByLogin(SecurityUtils.getEmail()).orElseThrow(() -> new AppException(
-                "Usuário não encontrato",
-                "O usuário é inválido",
-                HttpStatus.NOT_FOUND
-        ));
-
-        var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
-                .orElseThrow(() -> new AppException("Organização não encontrada",
-                        "ID de organizacao inválido",
-                        HttpStatus.NOT_FOUND));
-
-        var cliente = clienteRepository.findById(pedidoDTO.get(0).getCliente())
-                .orElseThrow(()-> new AppException("Cliente não encontrado",
-                        "ID do cliente é inválido",
-                        HttpStatus.NOT_FOUND));
-
-        var idPedido = UUID.randomUUID();
-
-        List<Pedido> pedidos = pedidoDTO.stream().map(item -> {
-            validarItem(item.getProduto(), item.getServico(), item.getQuantidade(), item.getPrecoUnitario());
-            if (item.getProduto() == null && item.getServico() == null) {
-                throw new AppException(
-                        "Nenhum serviço ou produto informados",
-                        "Verifique os dados enviados",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-            if(item.getProduto() != null && item.getServico() != null){
-                throw new AppException(
-                        "Configuração inválida",
-                        "Deve ser definido OU um produto OU um serviço, não ambos",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-            if (item.getQuantidade().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(
-                        "Quantidade inválida",
-                        "A quantidade deve ser maior que zero",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-
-            if (item.getPrecoUnitario().compareTo(BigDecimal.ZERO) < 0) {
-                throw new AppException(
-                        "Preço inválido",
-                        "O preço não pode ser negativo",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-
-            return Pedido.builder()
-                    .id(item.getId())
-                    .idPedido(idPedido)
-                    .user(email)
-                    .dataCriacao(LocalDateTime.now())
-                    .dataAlteracao(LocalDateTime.now())
-                    .organizacao(organizacao)
-                    .cliente(cliente)
-                    .status(Status.ATIVO)
-                    .quantidade(item.getQuantidade())
-                    .precoUnitario(item.getPrecoUnitario())
-                    .precoTotal(item.getQuantidade().multiply(item.getPrecoUnitario()))
-                    .produto(Optional.ofNullable(item.getProduto())
-                                    .flatMap(produtoRepository::findById)
-                                    .orElse(null)
-                    )
-                    .servico(Optional.ofNullable(item.getServico())
-                                    .flatMap(servicoRepository::findById)
-                                    .orElse(null)
-                    ).build();
-        }).toList();
-
-        pedidoRepository.saveAll(pedidos);
-
-        return pedidos;
-    }
-
-    private void validarItem(UUID produto, UUID servico, BigDecimal quantidade, BigDecimal preco){
-        if (produto == null && servico == null) {
-            throw new AppException(
-                    "Nenhum serviço ou produto informados",
-                    "Verifique os dados enviados",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-        if(produto != null && servico != null){
-            throw new AppException(
-                    "Configuração inválida",
-                    "Deve ser definido OU um produto OU um serviço, não ambos",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-        if (quantidade.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new AppException(
-                    "Quantidade inválida",
-                    "A quantidade deve ser maior que zero",
-                    HttpStatus.BAD_REQUEST
-            );
+        @Transactional(readOnly = true)
+        public List<ResumoPedidoDTO> buscarResumoPedidos(Pageable pageable) {
+                return pedidoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
+                                .map(pedido -> ResumoPedidoDTO.builder()
+                                        .id(pedido.getId())
+                                        .idPedido(pedido.getIdPedido())
+                                        .cliente(pedido.getCliente().getNomeFantasia())
+                                        .precoTotal(pedido.getPrecoTotal())
+                                        .dataCriacao(pedido.getDataCriacao())
+                                        .build()).collect(Collectors.toList());
         }
 
-        if (preco.compareTo(BigDecimal.ZERO) < 0) {
-            throw new AppException(
-                    "Preço inválido",
-                    "O preço não pode ser negativo",
-                    HttpStatus.BAD_REQUEST
-            );
+        @Transactional(readOnly = true)
+        public PedidoDTO buscarPedidoPorId(UUID id) {
+                var pedido = pedidoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
+                                .orElseThrow(() -> new AppException("Pedido não encontrado",
+                                        "ID do pedido inválido",
+                                        HttpStatus.NOT_FOUND));
+
+                List<ItemPedidoDTO> itensDtoResponse = pedido.getItens().stream()
+                                .filter(item -> item.getStatus() == Status.ATIVO)
+                                .map(item -> ItemPedidoDTO.builder()
+                                        .id(item.getId())
+                                        .produto(
+                                                Optional.ofNullable(item.getProduto())
+                                                        .map(Produto::getId)
+                                                        .orElse(null))
+                                        .servico(
+                                                Optional.ofNullable(item.getServico())
+                                                        .map(Servico::getId)
+                                                        .orElse(null))
+                                        .quantidade(item.getQuantidade())
+                                        .nome(item.getNome())
+                                        .descricao(item.getDescricao())
+                                        .tipo(item.getTipo())
+                                        .precoUnitario(item.getPrecoUnitario())
+                                        .precoTotal(item.getPrecoTotal())
+                                        .build()).collect(Collectors.toList());
+
+                return PedidoDTO.builder()
+                        .id(pedido.getId())
+                        .idPedido(pedido.getIdPedido())
+                        .itens(itensDtoResponse)
+                        .precoTotal(pedido.getPrecoTotal())
+                        .organizacao(pedido.getOrganizacao().getIdOrg())
+                        .user(pedido.getUser().getLogin())
+                        .cliente(pedido.getCliente().getId())
+                        .nomeFantasiaCliente(pedido.getNomeFantasiaCliente())
+                        .status(pedido.getStatus())
+                        .dataCriacao(pedido.getDataCriacao())
+                        .dataAlteracao(pedido.getDataAlteracao())
+                        .build();
         }
-    }
 }

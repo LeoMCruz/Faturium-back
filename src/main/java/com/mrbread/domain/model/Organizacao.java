@@ -13,9 +13,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Organizacao {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     private UUID idOrg;
     @Column
     private String nomeOrganizacao;

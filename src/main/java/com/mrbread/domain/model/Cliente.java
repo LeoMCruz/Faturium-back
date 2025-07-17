@@ -32,6 +32,8 @@ public class Cliente implements PertenceOrganizacao{
     private String estado;
     @Column
     private String email;
+    @Column
+    private String telefone;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organizacao_id", referencedColumnName = "idOrg")
     private Organizacao organizacao;

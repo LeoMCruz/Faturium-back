@@ -9,7 +9,7 @@ import org.antlr.v4.runtime.misc.OrderedHashSet;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.BiFunction;
 
 @Data
@@ -17,22 +17,19 @@ import java.util.function.BiFunction;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Pedido {
+public class Pedido implements PertenceOrganizacao{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column
-    private UUID idPedido;
-    @ManyToOne
-    @JoinColumn(name = "produto_id",referencedColumnName = "id")
-    private Produto produto;
-    @ManyToOne
-    @JoinColumn(name = "servico_id", referencedColumnName = "id")
-    private Servico servico;
-    @Column
-    private BigDecimal quantidade;
-    @Column
-    private BigDecimal precoUnitario;
+    @Column(unique = true, nullable = false, updatable = false)
+    private Long idPedido;
+    @OneToMany(
+            mappedBy = "pedido",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<ItemPedido> itens = new ArrayList<>();
     @Column
     private BigDecimal precoTotal;
     @ManyToOne
@@ -45,10 +42,11 @@ public class Pedido {
     @JoinColumn(name= "cliente_id", referencedColumnName = "id")
     private Cliente cliente;
     @Column
+    private String nomeFantasiaCliente;
+    @Column
     private Status status;
     @Column
     private LocalDateTime dataCriacao;
     @Column
     private LocalDateTime dataAlteracao;
-
 }

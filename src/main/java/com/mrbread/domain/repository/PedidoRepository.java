@@ -5,9 +5,11 @@ import com.mrbread.domain.model.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.UUID;
 
-public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
-    Page<Pedido> findByOrganizacaoIdOrgAndStatus(UUID organizacaoId, Status status, Pageable pageable);
+public interface PedidoRepository extends PertenceOrganizacaoRespository<Pedido, UUID> {
+    @Query("SELECT MAX(p.idPedido) FROM Pedido p")
+    Long findMaxIdPedido();
 }

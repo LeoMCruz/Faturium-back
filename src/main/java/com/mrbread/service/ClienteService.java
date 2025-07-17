@@ -1,5 +1,6 @@
 package com.mrbread.service;
 
+import com.mrbread.config.cache.RedisService;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Cliente;
@@ -9,6 +10,8 @@ import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.UserRepository;
 import com.mrbread.dto.ClienteDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final OrganizacaoRepository organizacaoRepository;
     private final UserRepository userRepository;
+    private final RedisService redisService;
 
     @Transactional
     public ClienteDTO salvarCliente(ClienteDTO clienteDTO){
@@ -48,6 +52,7 @@ public class ClienteService {
                 .estado(clienteDTO.getEstado())
                 .endereco(clienteDTO.getEndereco())
                 .razaoSocial(clienteDTO.getRazaoSocial())
+                .telefone(clienteDTO.getTelefone())
                 .organizacao(organizacao)
                 .usuarioCriacao(user)
                 .status(Status.ATIVO)
@@ -56,6 +61,7 @@ public class ClienteService {
                 .build();
 
         clienteRepository.save(cliente);
+        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
 
         return ClienteDTO.builder()
                 .id(cliente.getId())
@@ -66,6 +72,7 @@ public class ClienteService {
                 .estado(cliente.getEstado())
                 .endereco(cliente.getEndereco())
                 .razaoSocial(cliente.getRazaoSocial())
+                .telefone(cliente.getTelefone())
                 .organizacao(cliente.getOrganizacao().getIdOrg())
                 .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
                 .status(cliente.getStatus())
@@ -74,6 +81,9 @@ public class ClienteService {
                 .build();
     }
 
+    @Cacheable(value = "clientes", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
+            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
+            condition = "#search == null || #search.isEmpty()")
     @Transactional(readOnly = true)
     public List<ClienteDTO> buscarClientesOrganizacao(Pageable pageable){
         return clienteRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
@@ -86,6 +96,7 @@ public class ClienteService {
                         .estado(cliente.getEstado())
                         .endereco(cliente.getEndereco())
                         .razaoSocial(cliente.getRazaoSocial())
+                        .telefone(cliente.getTelefone())
                         .organizacao(cliente.getOrganizacao().getIdOrg())
                         .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
                         .dataCriacao(cliente.getDataCriacao())
@@ -104,6 +115,7 @@ public class ClienteService {
         cliente.setDataAlteracao(LocalDateTime.now());
         cliente.setStatus(Status.INATIVO);
         clienteRepository.save(cliente);
+        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
     }
 
     @Transactional
@@ -138,9 +150,14 @@ public class ClienteService {
                 .filter(nome -> !nome.isEmpty())
                 .ifPresent(cliente::setRazaoSocial);
 
+        Optional.ofNullable(clienteDTO.getTelefone())
+                .filter(nome -> !nome.isEmpty())
+                .ifPresent(cliente::setTelefone);
+
         cliente.setDataAlteracao(LocalDateTime.now());
 
         clienteRepository.save(cliente);
+        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
 
         return ClienteDTO.builder()
                 .id(cliente.getId())
@@ -151,6 +168,7 @@ public class ClienteService {
                 .estado(cliente.getEstado())
                 .endereco(cliente.getEndereco())
                 .razaoSocial(cliente.getRazaoSocial())
+                .telefone(cliente.getTelefone())
                 .organizacao(cliente.getOrganizacao().getIdOrg())
                 .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
                 .status(cliente.getStatus())

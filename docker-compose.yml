@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis-mrbread
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  mrbread-app:
+    build: .
+    container_name: mrbread-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://host.docker.internal:3306/mrbread
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=system.123
+      - REPORTS_PATH=/app/reports
+    restart: unless-stopped
+    volumes:
+      - ./reports:/app/reports  # Volume compartilhado para PDFs
+    networks:
+      - mrbread-network
+
+networks:
+  mrbread-network:
+    driver: bridge
+
+volumes:
+  redis_data:

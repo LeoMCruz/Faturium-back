@@ -28,6 +28,7 @@ public class ClienteDTO {
     private String cidade;
     private String estado;
     private String email;
+    private String telefone;
     private UUID organizacao;
     private String usuarioCriacao;
     private Status status;
