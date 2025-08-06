@@ -1,6 +1,5 @@
 package com.mrbread.service;
 
-import com.mrbread.config.cache.RedisService;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Servico;
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 public class ServicoService {
     private final ServicoRepository servicoRepository;
     private final OrganizacaoRepository organizacaoRepository;
-    private final RedisService redisService;
+//    private final RedisService redisService;
 
     @Transactional
     public ServicoDTO salvarServico(ServicoDTO servicoDTO){
@@ -48,7 +47,7 @@ public class ServicoService {
                 .build();
 
         servicoRepository.save(servico);
-        redisService.clearOrgCache("servicos", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("servicos", SecurityUtils.obterOrganizacaoId());
 
         return ServicoDTO.builder()
                 .id(servico.getId())
@@ -60,9 +59,9 @@ public class ServicoService {
                 .build();
     }
 
-    @Cacheable(value = "servicos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
-            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
-            condition = "#search == null || #search.isEmpty()")
+//    @Cacheable(value = "servicos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
+//            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
+//            condition = "#search == null || #search.isEmpty()")
     @Transactional(readOnly = true)
     public List<ServicoDTO> buscarServicosOrganizacao(Pageable pageable, String search){
         if(search == null || search.isEmpty()) {
@@ -78,13 +77,13 @@ public class ServicoService {
                             .build()
             ).collect(Collectors.toList());
         }
-        return buscarNome(search);
+        return buscarNome(search, pageable);
 
     }
 
-    private List<ServicoDTO> buscarNome(String search){
+    private List<ServicoDTO> buscarNome(String search, Pageable pageable){
         var searchForQuery = "%"+search+"%";
-        return servicoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery).stream().map(
+        return servicoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery, pageable).stream().map(
                 servico -> ServicoDTO.builder()
                         .id(servico.getId())
                         .nomeServico(servico.getNomeServico())
@@ -106,7 +105,7 @@ public class ServicoService {
         servico.setDataAlteracao(LocalDateTime.now());
         servico.setStatus(Status.INATIVO);
         servicoRepository.save(servico);
-        redisService.clearOrgCache("servico", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("servico", SecurityUtils.obterOrganizacaoId());
     }
 
     @Transactional
@@ -131,7 +130,7 @@ public class ServicoService {
         servico.setDataAlteracao(LocalDateTime.now());
 
         servicoRepository.save(servico);
-        redisService.clearOrgCache("servico", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("servico", SecurityUtils.obterOrganizacaoId());
 
         return ServicoDTO.builder()
                 .id(servico.getId())

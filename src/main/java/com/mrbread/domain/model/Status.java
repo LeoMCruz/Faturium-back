@@ -1,5 +1,5 @@
 package com.mrbread.domain.model;
 
 public enum Status {
-    ATIVO, INATIVO
+    ATIVO, INATIVO, CONCLUIDO, PENDENTE, CANCELADO
 }

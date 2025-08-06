@@ -16,6 +16,6 @@ public interface PertenceOrganizacaoRespository<T extends PertenceOrganizacao, T
     @Query("select e from #{#entityName} e where e.id = :id and e.organizacao.idOrg = :organizacaoId")
     Optional<T> findById(UUID id, UUID organizacaoId);
 
-    @Query("select e from #{#entityName} e where e.organizacao.idOrg = :organizacaoId and e.status = com.mrbread.domain.model.Status.ATIVO")
+    @Query("select e from #{#entityName} e where e.organizacao.idOrg = :organizacaoId and e.status != com.mrbread.domain.model.Status.INATIVO")
     Page<T> findAll(UUID organizacaoId, Pageable pageable);
 }

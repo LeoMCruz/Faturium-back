@@ -1,6 +1,5 @@
 package com.mrbread.rest;
 
-import com.mrbread.config.cache.RedisService;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.repository.ProdutoRepository;
@@ -24,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProdutoController {
     private final ProdutoService produtoService;
-    private final RedisService redisService;
+//    private final RedisService redisService;
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @PostMapping(value = "/produtos", consumes = "application/json", produces = "application/json")

@@ -17,5 +17,5 @@ public interface ClienteRepository extends PertenceOrganizacaoRespository<Client
     @Query("select e from Cliente e where " +
             "e.organizacao.idOrg = :organizacaoId and e.status = com.mrbread.domain.model.Status.ATIVO " +
             " and e.nomeFantasia like :search")
-    List<Servico> findByName(UUID organizacaoId, String search);
+    List<Cliente> findByName(UUID organizacaoId, String search, Pageable pageable);
 }

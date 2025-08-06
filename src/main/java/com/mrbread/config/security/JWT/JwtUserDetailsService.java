@@ -15,7 +15,6 @@ import org.springframework.stereotype.Component;
 public class JwtUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final CacheManager cacheManager;
 
     @Override
     public UserDetails loadUserByUsername(String login) throws UsernameNotFoundException {

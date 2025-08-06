@@ -16,5 +16,5 @@ public interface ServicoRepository extends PertenceOrganizacaoRespository<Servic
     @Query("select e from Servico e where " +
             "e.organizacao.idOrg = :organizacaoId and e.status = com.mrbread.domain.model.Status.ATIVO " +
             " and e.nomeServico like :search")
-    List<Servico> findByName(UUID organizacaoId, String search);
+    List<Servico> findByName(UUID organizacaoId, String search, Pageable pageable);
 }

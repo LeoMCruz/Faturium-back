@@ -15,5 +15,5 @@ public interface ProdutoRepository extends PertenceOrganizacaoRespository<Produt
     @Query("select e from Produto e where " +
             "e.organizacao.idOrg = :organizacaoId and e.status = com.mrbread.domain.model.Status.ATIVO " +
             " and e.nomeProduto like :search")
-    List<Produto> findByName(UUID organizacaoId, String search);
+    List<Produto> findByName(UUID organizacaoId, String search, Pageable pageable);
 }

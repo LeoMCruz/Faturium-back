@@ -4,6 +4,7 @@ import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Organizacao;
 import com.mrbread.domain.repository.OrganizacaoRepository;
+import com.mrbread.dto.DetalhesPedidoDTO;
 import com.mrbread.dto.PedidoDTO;
 import lombok.RequiredArgsConstructor;
 import net.sf.jasperreports.engine.*;
@@ -29,15 +30,10 @@ public class DetalhesPedidoReport {
     private final OrganizacaoRepository organizacaoRepository;
 
     @Value("${reports.path:/app/reports}")
-    private String reportsPath;               // pasta dentro do container (mapeada para ./reports na máquina host)
+    private String reportsPath;
 
-    /**
-     * Gera o PDF do pedido, grava no volume compartilhado
-     * e devolve o caminho absoluto do arquivo dentro do container.
-     */
-    public String generateReport(PedidoDTO pedidoDto) {
+    public String generateReport(DetalhesPedidoDTO pedidoDto) {
 
-        // 1) Recupera a organização logada
         Organizacao organizacao = organizacaoRepository
                 .findByIdOrg(SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException(
@@ -48,10 +44,8 @@ public class DetalhesPedidoReport {
         try (InputStream jasperStream =
                      getClass().getResourceAsStream("/jasper/orderDetails/DetalhePedido.jasper")) {
 
-            // 2) Carrega o relatório já compilado (.jasper)
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(jasperStream);
 
-            // 3) Monta os parâmetros
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("cliente",      pedidoDto.getNomeFantasiaCliente());
             parameters.put("pedidoId",     pedidoDto.getIdPedido());
@@ -59,27 +53,21 @@ public class DetalhesPedidoReport {
             parameters.put("total",        pedidoDto.getPrecoTotal());
             parameters.put("organizacao",  organizacao.getNomeOrganizacao());
 
-            // DataSource para os itens do pedido
             JRBeanCollectionDataSource itensDataSource =
                     new JRBeanCollectionDataSource(pedidoDto.getItens());
             parameters.put("itensDataSource", itensDataSource);
 
-            // 4) Preenche o relatório
             JasperPrint jasperPrint =
                     JasperFillManager.fillReport(jasperReport, parameters, new JREmptyDataSource());
 
-            // 5) Garante que a pasta de relatórios exista
             Path reportsDir = Paths.get(reportsPath);
             Files.createDirectories(reportsDir);
 
-            // 6) Define nome do arquivo e caminho completo
             String fileName = generateFileName(pedidoDto.getIdPedido().toString());
             Path   filePath = reportsDir.resolve(fileName);
 
-            // 7) Exporta para PDF
             JasperExportManager.exportReportToPdfFile(jasperPrint, filePath.toString());
 
-            // Retorna caminho (dentro do container); na máquina host estará em ./reports
             return filePath.toString();
 
         } catch (Exception e) {
@@ -87,7 +75,6 @@ public class DetalhesPedidoReport {
         }
     }
 
-    /* Gera um nome de arquivo único: pedido_<id>_yyyyMMdd_HHmmss.pdf */
     private String generateFileName(String pedidoId) {
         String timestamp = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));

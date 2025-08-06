@@ -4,6 +4,7 @@ import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.*;
 import com.mrbread.domain.repository.*;
+import com.mrbread.dto.DetalhesPedidoDTO;
 import com.mrbread.dto.ItemPedidoDTO;
 import com.mrbread.dto.PedidoDTO;
 import com.mrbread.dto.ResumoPedidoDTO;
@@ -64,7 +65,7 @@ public class PedidoService {
                         .organizacao(org)
                         .cliente(cliente)
                         .nomeFantasiaCliente(cliente.getNomeFantasia())
-                        .status(Status.ATIVO)
+                        .status(Status.PENDENTE)
                         .dataCriacao(LocalDateTime.now())
                         .dataAlteracao(LocalDateTime.now())
                         .itens(new ArrayList<>())
@@ -89,7 +90,7 @@ public class PedidoService {
                                         .orElse(null);
 
                             return ItemPedido.builder()
-                                    .nome(produto != null ? produto.getNomeProduto() : servico.getNomeServico())
+                                    .nome(produto != null ? produto.getNomeProduto() : Objects.requireNonNull(servico).getNomeServico())
                                     .descricao(produto != null ? produto.getDescricao() : servico.getDescricao())
                                     .tipo(produto != null? "Produto" : "Serviço")
                                     .pedido(pedido)
@@ -183,20 +184,23 @@ public class PedidoService {
                                         .id(pedido.getId())
                                         .idPedido(pedido.getIdPedido())
                                         .cliente(pedido.getCliente().getNomeFantasia())
+                                        .razaoSocial(pedido.getCliente().getRazaoSocial())
                                         .precoTotal(pedido.getPrecoTotal())
+                                        .status(pedido.getStatus())
                                         .dataCriacao(pedido.getDataCriacao())
+                                        .dataAlteracao(pedido.getDataAlteracao())
                                         .build()).collect(Collectors.toList());
         }
 
         @Transactional(readOnly = true)
-        public PedidoDTO buscarPedidoPorId(UUID id) {
+        public DetalhesPedidoDTO buscarPedidoPorId(UUID id) {
                 var pedido = pedidoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
                                 .orElseThrow(() -> new AppException("Pedido não encontrado",
                                         "ID do pedido inválido",
                                         HttpStatus.NOT_FOUND));
 
                 List<ItemPedidoDTO> itensDtoResponse = pedido.getItens().stream()
-                                .filter(item -> item.getStatus() == Status.ATIVO)
+                                .filter(item -> item.getStatus() != Status.INATIVO)
                                 .map(item -> ItemPedidoDTO.builder()
                                         .id(item.getId())
                                         .produto(
@@ -215,6 +219,116 @@ public class PedidoService {
                                         .precoTotal(item.getPrecoTotal())
                                         .build()).collect(Collectors.toList());
 
+                return DetalhesPedidoDTO.builder()
+                        .id(pedido.getId())
+                        .idPedido(pedido.getIdPedido())
+                        .itens(itensDtoResponse)
+                        .precoTotal(pedido.getPrecoTotal())
+                        .organizacao(pedido.getOrganizacao().getIdOrg())
+                        .user(pedido.getUser().getLogin())
+                        .cliente(pedido.getCliente().getId())
+                        .cnpj(pedido.getCliente().getCnpj())
+                        .cidade(pedido.getCliente().getCidade())
+                        .estado(pedido.getCliente().getEstado())
+                        .nomeFantasiaCliente(pedido.getNomeFantasiaCliente())
+                        .status(pedido.getStatus())
+                        .dataCriacao(pedido.getDataCriacao())
+                        .dataAlteracao(pedido.getDataAlteracao())
+                        .build();
+        }
+
+        @Transactional
+        public void deletePedido(UUID id){
+                var pedido = pedidoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
+                        .orElseThrow(() -> new AppException("Pedido não encontrado",
+                                "ID do pedido inválido",
+                                HttpStatus.NOT_FOUND));
+                pedido.setDataAlteracao(LocalDateTime.now());
+                pedido.setStatus(Status.INATIVO);
+                pedidoRepository.save(pedido);
+        }
+
+        public PedidoDTO alterarPedido(PedidoDTO pedidoDTO){
+                var pedido = pedidoRepository.findById(pedidoDTO.getId(), SecurityUtils.obterOrganizacaoId())
+                        .orElseThrow(() -> new AppException("Pedido não encontrado",
+                                "ID do pedido inválido",
+                                HttpStatus.NOT_FOUND));
+                Cliente cliente = clienteRepository.findById(pedidoDTO.getCliente())
+                        .orElseThrow(() -> new AppException(
+                                "Cliente não encontrado",
+                                "ID do cliente é inválido",
+                                HttpStatus.NOT_FOUND));
+                pedido.setCliente(cliente);
+
+                pedido.setStatus(pedidoDTO.getStatus());
+
+                pedido.getItens().clear();
+
+                List<ItemPedido> itens = pedidoDTO.getItens().stream()
+                        .map(item -> {
+                                validarItem(
+                                        item.getProduto() != null ? item.getProduto() : null,
+                                        item.getServico() != null ? item.getServico() : null,
+                                        item.getQuantidade(),
+                                        item.getPrecoUnitario());
+
+                                Produto produto = Optional.ofNullable(item.getProduto())
+                                        .flatMap(id -> produtoRepository.findById(
+                                                id, SecurityUtils.obterOrganizacaoId()))
+                                        .orElse(null);
+
+                                Servico servico = Optional.ofNullable(item.getServico())
+                                        .flatMap(id -> servicoRepository.findById(
+                                                id, SecurityUtils.obterOrganizacaoId()))
+                                        .orElse(null);
+
+                                return ItemPedido.builder()
+                                        .nome(produto != null ? produto.getNomeProduto() : Objects.requireNonNull(servico).getNomeServico())
+                                        .descricao(produto != null ? produto.getDescricao() : servico.getDescricao())
+                                        .tipo(produto != null? "Produto" : "Serviço")
+                                        .pedido(pedido)
+                                        .produto(produto)
+                                        .servico(servico)
+                                        .quantidade(item.getQuantidade())
+                                        .precoUnitario(item.getPrecoUnitario())
+                                        .precoTotal(item.getQuantidade()
+                                                .multiply(item.getPrecoUnitario()))
+                                        .status(Status.ATIVO)
+                                        .build();
+                        }).toList();
+
+                pedido.getItens().addAll(itens);
+
+                BigDecimal total = itens.stream()
+                        .filter(itemPedido -> itemPedido.getStatus() == Status.ATIVO)
+                        .map(ItemPedido::getPrecoTotal)
+                        .map(value -> value != null ? value : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                pedido.setPrecoTotal(total);
+
+                pedido.setDataAlteracao(LocalDateTime.now());
+
+                var alterarPedido = pedidoRepository.save(pedido);
+
+                List<ItemPedidoDTO> itensDtoResponse = alterarPedido.getItens().stream()
+                        .map(item -> ItemPedidoDTO.builder()
+                                .produto(
+                                        Optional.ofNullable(item.getProduto())
+                                                .map(Produto::getId)
+                                                .orElse(null))
+                                .servico(
+                                        Optional.ofNullable(item.getServico())
+                                                .map(Servico::getId)
+                                                .orElse(null))
+                                .quantidade(item.getQuantidade())
+                                .nome(item.getNome())
+                                .descricao(item.getDescricao())
+                                .tipo(item.getTipo())
+                                .precoUnitario(item.getPrecoUnitario())
+                                .precoTotal(item.getPrecoTotal())
+                                .build())
+                        .collect(Collectors.toList());
+
                 return PedidoDTO.builder()
                         .id(pedido.getId())
                         .idPedido(pedido.getIdPedido())
@@ -223,10 +337,11 @@ public class PedidoService {
                         .organizacao(pedido.getOrganizacao().getIdOrg())
                         .user(pedido.getUser().getLogin())
                         .cliente(pedido.getCliente().getId())
-                        .nomeFantasiaCliente(pedido.getNomeFantasiaCliente())
+                        .nomeFantasiaCliente(cliente.getNomeFantasia())
                         .status(pedido.getStatus())
                         .dataCriacao(pedido.getDataCriacao())
                         .dataAlteracao(pedido.getDataAlteracao())
                         .build();
+
         }
 }

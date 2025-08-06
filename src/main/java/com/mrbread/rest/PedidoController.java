@@ -1,5 +1,6 @@
 package com.mrbread.rest;
 
+import com.mrbread.dto.DetalhesPedidoDTO;
 import com.mrbread.dto.PedidoDTO;
 import com.mrbread.dto.ResumoPedidoDTO;
 import com.mrbread.service.JasperReports.DetalhesPedidoReport;
@@ -40,21 +41,34 @@ public class PedidoController {
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping(value = "/pedidos", produces = "application/json")
     public ResponseEntity<List<ResumoPedidoDTO>> getOrdersResume(@PageableDefault(sort = {"idPedido", "id"},
-            direction = Sort.Direction.ASC) Pageable pageable){
+            direction = Sort.Direction.DESC) Pageable pageable){
         return ResponseEntity.status(HttpStatus.OK).body(pedidoService.buscarResumoPedidos(pageable));
     }
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping(value = "/pedidos/{id}", produces = "application/json")
-    public ResponseEntity<PedidoDTO> getOrderById(@PathVariable UUID id){
+    public ResponseEntity<DetalhesPedidoDTO> getOrderById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(pedidoService.buscarPedidoPorId(id));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PutMapping(value = "/pedidos", produces = "application/json")
+    public ResponseEntity<PedidoDTO> updateOrder(@RequestBody PedidoDTO pedidoDTO){
+        return ResponseEntity.ok().body(pedidoService.alterarPedido(pedidoDTO));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @DeleteMapping(value = "/pedidos/{id}", produces = "application/json")
+    public ResponseEntity<Void> deleteOrder(@PathVariable UUID id){
+        pedidoService.deletePedido(id);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping(value = "/pedidos/reports/{id}", produces = "application/json")
     public ResponseEntity<Resource> orderByIdReport(@PathVariable UUID id) {
         try {
-            PedidoDTO dto = pedidoService.buscarPedidoPorId(id);
+            DetalhesPedidoDTO dto = pedidoService.buscarPedidoPorId(id);
             String caminhoPdf = reports.generateReport(dto);
             Path path = Paths.get(caminhoPdf);
             if (!Files.exists(path)) {

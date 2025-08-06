@@ -8,18 +8,25 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResumoPedidoDTO {
+public class DetalhesPedidoDTO {
     private UUID id;
     private Long idPedido;
+    private List<ItemPedidoDTO> itens;
     private BigDecimal precoTotal;
-    private String cliente;
-    private String razaoSocial;
+    private UUID organizacao;
+    private String user;
+    private UUID cliente;
+    private String nomeFantasiaCliente;
+    private String cnpj;
+    private String cidade;
+    private String estado;
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;

@@ -28,8 +28,8 @@ public class ClienteController {
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/clientes", produces = "application/json")
     public ResponseEntity<List<ClienteDTO>> getClients (@PageableDefault(sort = {"nomeFantasia", "id"},
-            direction = Sort.Direction.ASC) Pageable pageable){
-        return ResponseEntity.ok().body(clienteService.buscarClientesOrganizacao(pageable));
+            direction = Sort.Direction.ASC) Pageable pageable, @RequestParam(required = false) String search){
+        return ResponseEntity.ok().body(clienteService.buscarClientesOrganizacao(pageable, search));
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")

@@ -1,6 +1,5 @@
 package com.mrbread.service;
 
-import com.mrbread.config.cache.RedisService;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Cliente;
@@ -9,6 +8,7 @@ import com.mrbread.domain.repository.ClienteRepository;
 import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.UserRepository;
 import com.mrbread.dto.ClienteDTO;
+import com.mrbread.dto.ServicoDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,7 +29,7 @@ public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final OrganizacaoRepository organizacaoRepository;
     private final UserRepository userRepository;
-    private final RedisService redisService;
+//    private final RedisService redisService;
 
     @Transactional
     public ClienteDTO salvarCliente(ClienteDTO clienteDTO){
@@ -61,7 +61,7 @@ public class ClienteService {
                 .build();
 
         clienteRepository.save(cliente);
-        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
 
         return ClienteDTO.builder()
                 .id(cliente.getId())
@@ -81,28 +81,52 @@ public class ClienteService {
                 .build();
     }
 
-    @Cacheable(value = "clientes", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
-            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
-            condition = "#search == null || #search.isEmpty()")
+//    @Cacheable(value = "clientes", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
+//            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
+//            condition = "#search == null || #search.isEmpty()")
     @Transactional(readOnly = true)
-    public List<ClienteDTO> buscarClientesOrganizacao(Pageable pageable){
-        return clienteRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
+    public List<ClienteDTO> buscarClientesOrganizacao(Pageable pageable, String search){
+        if(search == null || search.isEmpty()) {
+            return clienteRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
+                    .map(cliente -> ClienteDTO.builder()
+                            .id(cliente.getId())
+                            .nomeFantasia(cliente.getNomeFantasia())
+                            .email(cliente.getEmail())
+                            .cnpj(cliente.getCnpj())
+                            .cidade(cliente.getCidade())
+                            .estado(cliente.getEstado())
+                            .endereco(cliente.getEndereco())
+                            .razaoSocial(cliente.getRazaoSocial())
+                            .telefone(cliente.getTelefone())
+                            .organizacao(cliente.getOrganizacao().getIdOrg())
+                            .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
+                            .dataCriacao(cliente.getDataCriacao())
+                            .dataAlteracao(cliente.getDataAlteracao())
+                            .status(cliente.getStatus())
+                            .build()).collect(Collectors.toList());
+        }
+        return buscarNome(search, pageable);
+    }
+
+    private List<ClienteDTO> buscarNome(String search, Pageable pageable){
+        var searchForQuery = "%"+search+"%";
+        return clienteRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery, pageable).stream()
                 .map(cliente -> ClienteDTO.builder()
-                        .id(cliente.getId())
-                        .nomeFantasia(cliente.getNomeFantasia())
-                        .email(cliente.getEmail())
-                        .cnpj(cliente.getCnpj())
-                        .cidade(cliente.getCidade())
-                        .estado(cliente.getEstado())
-                        .endereco(cliente.getEndereco())
-                        .razaoSocial(cliente.getRazaoSocial())
-                        .telefone(cliente.getTelefone())
-                        .organizacao(cliente.getOrganizacao().getIdOrg())
-                        .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
-                        .dataCriacao(cliente.getDataCriacao())
-                        .dataAlteracao(cliente.getDataAlteracao())
-                        .status(cliente.getStatus())
-                        .build()).collect(Collectors.toList());
+                    .id(cliente.getId())
+                    .nomeFantasia(cliente.getNomeFantasia())
+                    .email(cliente.getEmail())
+                    .cnpj(cliente.getCnpj())
+                    .cidade(cliente.getCidade())
+                    .estado(cliente.getEstado())
+                    .endereco(cliente.getEndereco())
+                    .razaoSocial(cliente.getRazaoSocial())
+                    .telefone(cliente.getTelefone())
+                    .organizacao(cliente.getOrganizacao().getIdOrg())
+                    .usuarioCriacao(cliente.getUsuarioCriacao().getLogin())
+                    .dataCriacao(cliente.getDataCriacao())
+                    .dataAlteracao(cliente.getDataAlteracao())
+                    .status(cliente.getStatus())
+                    .build()).collect(Collectors.toList());
     }
 
     @Transactional
@@ -115,7 +139,7 @@ public class ClienteService {
         cliente.setDataAlteracao(LocalDateTime.now());
         cliente.setStatus(Status.INATIVO);
         clienteRepository.save(cliente);
-        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
     }
 
     @Transactional
@@ -157,7 +181,7 @@ public class ClienteService {
         cliente.setDataAlteracao(LocalDateTime.now());
 
         clienteRepository.save(cliente);
-        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("clientes", SecurityUtils.obterOrganizacaoId());
 
         return ClienteDTO.builder()
                 .id(cliente.getId())

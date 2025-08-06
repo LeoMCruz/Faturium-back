@@ -1,6 +1,5 @@
 package com.mrbread.service;
 
-import com.mrbread.config.cache.RedisService;
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.Produto;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final OrganizacaoRepository organizacaoRepository;
-    private final RedisService redisService;
+//    private final RedisService redisService;
 
     @Transactional
     public ProdutoDTO salvarProduto(ProdutoDTO produtoDTO){
@@ -49,7 +48,7 @@ public class ProdutoService {
                 .build();
 
         produtoRepository.save(produto);
-        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
 
         return ProdutoDTO.builder()
                 .id(produto.getId())
@@ -62,9 +61,9 @@ public class ProdutoService {
                 .build();
     }
 
-    @Cacheable(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
-            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
-            condition = "#search == null || #search.isEmpty()")
+//    @Cacheable(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId() " +
+//            "+ ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort",
+//            condition = "#search == null || #search.isEmpty()")
     @Transactional(readOnly = true)
     public List<ProdutoDTO> buscarTodosProdutosOrganizacao(Pageable pageable, String search){
         if(search == null || search.isEmpty()) {
@@ -80,7 +79,7 @@ public class ProdutoService {
                     .build()).collect(Collectors.toList());
         }
         var searchForQuery = "%"+search+"%";
-        return produtoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery).stream().map(produto -> ProdutoDTO.builder()
+        return produtoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery, pageable).stream().map(produto -> ProdutoDTO.builder()
                 .id(produto.getId())
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
@@ -92,7 +91,7 @@ public class ProdutoService {
                 .build()).collect(Collectors.toList());
     }
 
-    @CacheEvict(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId()")
+//    @CacheEvict(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId()")
     @Transactional
     public void deleteProduto(UUID id){
         var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
@@ -107,10 +106,10 @@ public class ProdutoService {
         produto.setDataAlteracao(LocalDateTime.now());
         produto.setStatus(Status.INATIVO);
         produtoRepository.save(produto);
-        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
     }
 
-    @CacheEvict(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId()")
+//    @CacheEvict(value = "produtos", key = "T(com.mrbread.config.security.SecurityUtils).obterOrganizacaoId()")
     @Transactional
     public ProdutoDTO updateProduto(UUID id, ProdutoDTO produtoDTO){
         var produto = produtoRepository.findById(id, SecurityUtils.obterOrganizacaoId())
@@ -132,7 +131,7 @@ public class ProdutoService {
         produto.setDataAlteracao(LocalDateTime.now());
 
         produtoRepository.save(produto);
-        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
+//        redisService.clearOrgCache("produtos", SecurityUtils.obterOrganizacaoId());
 
         return ProdutoDTO.builder()
                 .id(produto.getId())
