@@ -3,14 +3,12 @@ package com.mrbread.dto;
 import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.model.Status;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -25,6 +23,10 @@ public class UserDTO {
     private String username;
     @NotBlank(message = "O nome é obrigatório")
     private String nome;
+    private String endereco;
+    private String cidade;
+    private String estado;
+    private String telefone;
     private Status status;
     private PerfilAcesso perfilAcesso;
     private UUID organizacaoId;

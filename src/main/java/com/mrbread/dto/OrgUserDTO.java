@@ -2,7 +2,6 @@ package com.mrbread.dto;
 
 import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.model.Status;
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +23,10 @@ public class OrgUserDTO {
     private String nomeOrganizacao;
     private UUID organizacaoId;
     private String cnpj;
+    private String endereco;
+    private String telefone;
+    private String cidade;
+    private String estado;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
 }

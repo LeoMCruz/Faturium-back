@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +29,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final OrganizacaoRepository organizacaoRepository;
-    private final OrganizacaoService organizacaoService;
 
     //cria usuario principal (admin), junto com a criação da organização.
     @Transactional
@@ -43,14 +41,18 @@ public class UserService {
         }
 
         Organizacao organizacao = Organizacao.builder()
-                    .nomeOrganizacao(userDTO.getNomeOrganizacao())
-                    .cnpj(userDTO.getCnpj())
-                    .status(Status.ATIVO)
-                    .usuarios(new HashSet<>())
-                    .dataCriacao(LocalDateTime.now())
-                    .dataAlteracao(LocalDateTime.now())
-                    .build();
-            organizacaoRepository.save(organizacao);
+                .nomeOrganizacao(userDTO.getNomeOrganizacao())
+                .cnpj(userDTO.getCnpj())
+                .endereco(userDTO.getEndereco())
+                .cidade(userDTO.getCidade())
+                .estado(userDTO.getEstado())
+                .telefone(userDTO.getTelefone())
+                .status(Status.ATIVO)
+                .usuarios(new HashSet<>())
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
+                .build();
+        organizacaoRepository.save(organizacao);
 
 
         var user = User.builder()
@@ -130,6 +132,10 @@ public class UserService {
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
                 .organizacaoId(organizacao.getIdOrg())
                 .cnpj(organizacao.getCnpj())
+                .endereco(organizacao.getEndereco())
+                .cidade(organizacao.getCidade())
+                .estado(organizacao.getEstado())
+                .telefone(organizacao.getTelefone())
                 .dataCriacao(user.getDataCriacao())
                 .dataAlteracao(user.getDataAlteracao())
                 .build();

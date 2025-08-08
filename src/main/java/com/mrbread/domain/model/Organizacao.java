@@ -24,6 +24,14 @@ public class Organizacao {
     @Column (unique = true)
     private String cnpj;
     @Column
+    private String endereco;
+    @Column
+    private String cidade;
+    @Column
+    private String estado;
+    @Column
+    private String telefone;
+    @Column
     private Status status;
     @OneToMany(mappedBy = "organizacao")
     @ToString.Exclude
