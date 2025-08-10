@@ -14,4 +14,7 @@ import java.util.UUID;
 public interface PedidoRepository extends PertenceOrganizacaoRespository<Pedido, UUID> {
     @Query("SELECT MAX(p.idPedido) FROM Pedido p")
     Long findMaxIdPedido();
+
+    @Query("select e from Pedido e where e.organizacao.idOrg = :organizacaoId and e.status != com.mrbread.domain.model.Status.INATIVO and e.user.login = :username")
+    Page<Pedido> findAllByUser(UUID organizacaoId, Pageable pageable, String username);
 }

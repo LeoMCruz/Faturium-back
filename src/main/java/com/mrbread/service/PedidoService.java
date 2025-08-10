@@ -179,7 +179,20 @@ public class PedidoService {
 
         @Transactional(readOnly = true)
         public List<ResumoPedidoDTO> buscarResumoPedidos(Pageable pageable) {
-                return pedidoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
+                if(SecurityUtils.isManager() || SecurityUtils.isAdmin()){
+                        return pedidoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
+                                .map(pedido -> ResumoPedidoDTO.builder()
+                                        .id(pedido.getId())
+                                        .idPedido(pedido.getIdPedido())
+                                        .cliente(pedido.getCliente().getNomeFantasia())
+                                        .razaoSocial(pedido.getCliente().getRazaoSocial())
+                                        .precoTotal(pedido.getPrecoTotal())
+                                        .status(pedido.getStatus())
+                                        .dataCriacao(pedido.getDataCriacao())
+                                        .dataAlteracao(pedido.getDataAlteracao())
+                                        .build()).collect(Collectors.toList());
+                }
+                return pedidoRepository.findAllByUser(SecurityUtils.obterOrganizacaoId(), pageable, SecurityUtils.getEmail()).stream()
                                 .map(pedido -> ResumoPedidoDTO.builder()
                                         .id(pedido.getId())
                                         .idPedido(pedido.getIdPedido())

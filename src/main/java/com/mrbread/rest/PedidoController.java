@@ -38,7 +38,7 @@ public class PedidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.criarPedido(pedidoDTO));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/pedidos", produces = "application/json")
     public ResponseEntity<List<ResumoPedidoDTO>> getOrdersResume(@PageableDefault(sort = {"idPedido", "id"},
             direction = Sort.Direction.DESC) Pageable pageable){
