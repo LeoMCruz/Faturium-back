@@ -8,4 +8,5 @@ import lombok.Data;
 public class AuthenticationResponse {
     private String accessToken;
     private String errorMessage;
+    private Boolean profileComplete;
 }

@@ -1,7 +1,9 @@
 package com.mrbread.dto;
 
+import com.mrbread.domain.model.AuthProvider;
 import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.model.Status;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +22,9 @@ public class OrgUserDTO {
     private String nome;
     private Status status;
     private PerfilAcesso perfilAcesso;
+    private String googleId;
+    private AuthProvider authProvider;
+    private Boolean profileComplete;
     private String nomeOrganizacao;
     private UUID organizacaoId;
     private String cnpj;

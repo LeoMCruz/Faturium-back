@@ -36,6 +36,12 @@ public class User implements UserDetails, PertenceOrganizacao {
     @Enumerated
     private PerfilAcesso perfilAcesso;
     @Column
+    private String googleId;
+    @Column
+    private Boolean profileComplete;
+    @Column
+    private AuthProvider authProvider;
+    @Column
     @Enumerated
     private Status status;
     @Column

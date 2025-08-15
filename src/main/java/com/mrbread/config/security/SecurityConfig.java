@@ -43,6 +43,12 @@ public class SecurityConfig{
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acesso público ao endpoint de login e criação de usuário
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        // acesso publico para login com google
+                        .requestMatchers(HttpMethod.POST, "/login/google").permitAll()
+                        //linkar conta google com conta default
+                        .requestMatchers(HttpMethod.POST, "/login/linkgoogle").permitAll()
+                        //completar cadastro e retornar token valido
+                        .requestMatchers(HttpMethod.POST, "/login/complete-profile").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
                         // permitir acesso ao h2

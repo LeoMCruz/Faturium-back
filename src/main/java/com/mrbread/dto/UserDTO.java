@@ -1,5 +1,6 @@
 package com.mrbread.dto;
 
+import com.mrbread.domain.model.AuthProvider;
 import com.mrbread.domain.model.PerfilAcesso;
 import com.mrbread.domain.model.Status;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +30,9 @@ public class UserDTO {
     private String telefone;
     private Status status;
     private PerfilAcesso perfilAcesso;
+    private String googleId;
+    private Boolean profileComplete;
+    private AuthProvider authProvider;
     private UUID organizacaoId;
     private String nomeOrganizacao;
     private String cnpj;

@@ -30,7 +30,7 @@ public class PedidoController {
     private final PedidoService pedidoService;
     private final DetalhesPedidoReport reports;
 
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @PostMapping(value = "/pedidos", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> createOrder(@RequestBody PedidoDTO pedidoDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(pedidoService.criarPedido(pedidoDTO));

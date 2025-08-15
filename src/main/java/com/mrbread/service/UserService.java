@@ -2,10 +2,7 @@ package com.mrbread.service;
 
 import com.mrbread.config.exception.AppException;
 import com.mrbread.config.security.SecurityUtils;
-import com.mrbread.domain.model.Organizacao;
-import com.mrbread.domain.model.PerfilAcesso;
-import com.mrbread.domain.model.Status;
-import com.mrbread.domain.model.User;
+import com.mrbread.domain.model.*;
 import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.UserRepository;
 import com.mrbread.dto.OrgUserDTO;
@@ -61,6 +58,8 @@ public class UserService {
                 .nome(userDTO.getNome())
                 .status(Status.ATIVO)
                 .perfilAcesso(PerfilAcesso.ADMIN)
+                .profileComplete(true)
+                .authProvider(AuthProvider.DEFAULT)
                 .organizacao(organizacao)
                 .dataCriacao(LocalDateTime.now())
                 .dataAlteracao(LocalDateTime.now())
@@ -94,6 +93,7 @@ public class UserService {
                 .login(userDTO.getUsername())
                 .nome(userDTO.getNome())
                 .status(Status.ATIVO)
+                .profileComplete(true)
                 .perfilAcesso(userDTO.getPerfilAcesso())
                 .organizacao(organizacao)
                 .dataCriacao(LocalDateTime.now())
@@ -129,6 +129,7 @@ public class UserService {
                 .username(user.getLogin())
                 .nome(user.getNome())
                 .perfilAcesso(user.getPerfilAcesso())
+                .profileComplete(user.getProfileComplete())
                 .status(user.getStatus())
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
                 .organizacaoId(organizacao.getIdOrg())
@@ -200,5 +201,50 @@ public class UserService {
                 .dataCriacao(user.getDataCriacao())
                 .dataAlteracao(user.getDataAlteracao())
                 .build();
+    }
+
+    public User createGoogleUser(String email, String sub, String name){
+        if(userRepository.existsByLogin(email))
+            throw new AppException("Email já cadastrado.", "Tente novamente", HttpStatus.CONFLICT);
+        var user = User.builder()
+                .login(email)
+                .googleId(sub)
+                .nome(name)
+                .authProvider(AuthProvider.GOOGLE)
+                .perfilAcesso(PerfilAcesso.ADMIN)
+                .profileComplete(false)
+                .status(Status.ATIVO)
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
+                .build();
+        userRepository.save(user);
+        return user;
+    }
+
+    public User completeProfile(UserDTO userDTO){
+        var user = userRepository.findById(userDTO.getId())
+                .orElseThrow(() -> new AppException("Usuário não encontrado",
+                        "Email inválido",
+                        HttpStatus.NOT_FOUND));;
+
+        Organizacao organizacao = Organizacao.builder()
+                .nomeOrganizacao(userDTO.getNomeOrganizacao())
+                .cnpj(userDTO.getCnpj())
+                .endereco(userDTO.getEndereco())
+                .cidade(userDTO.getCidade())
+                .estado(userDTO.getEstado())
+                .telefone(userDTO.getTelefone())
+                .status(Status.ATIVO)
+                .usuarios(new HashSet<>())
+                .dataCriacao(LocalDateTime.now())
+                .dataAlteracao(LocalDateTime.now())
+                .build();
+        organizacaoRepository.save(organizacao);
+
+        user.setOrganizacao(organizacao);
+        user.setDataAlteracao(LocalDateTime.now());
+        user.setProfileComplete(true);
+        userRepository.save(user);
+        return user;
     }
 }

@@ -49,6 +49,5 @@ public class UserController {
     public ResponseEntity<?> updateUser(@RequestBody UserDTO userDTO){
         return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userDTO));
     }
-
 }
 

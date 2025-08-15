@@ -70,9 +70,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         User user = new User();
         user.setId(UUID.fromString(value.getClaim("id").asString()));
-        user.setOrganizacao(Organizacao.builder()
-                        .idOrg(UUID.fromString(value.getAudience().get(0)))
-                .build());
+        if (value.getAudience() != null && !value.getAudience().isEmpty()) {
+            user.setOrganizacao(Organizacao.builder()
+                    .idOrg(UUID.fromString(value.getAudience().get(0)))
+                    .build());
+        } else {
+            user.setOrganizacao(null);
+        }
         user.setLogin(value.getSubject());
 //        if(!user.isEnabled()){
 //            throw new DisabledException("Usuário está inativo");
