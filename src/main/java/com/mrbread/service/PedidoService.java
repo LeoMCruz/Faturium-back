@@ -57,7 +57,7 @@ public class PedidoService {
                                         "ID do cliente é inválido",
                                         HttpStatus.NOT_FOUND));
 
-                Long idPedido = pedidoIdService.gerarProximoIdPedido();
+                Long idPedido = pedidoIdService.gerarProximoIdPedido(SecurityUtils.obterOrganizacaoId());
 
                 Pedido pedido = Pedido.builder()
                         .idPedido(idPedido)

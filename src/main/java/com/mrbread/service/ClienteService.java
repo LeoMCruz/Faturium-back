@@ -8,10 +8,8 @@ import com.mrbread.domain.repository.ClienteRepository;
 import com.mrbread.domain.repository.OrganizacaoRepository;
 import com.mrbread.domain.repository.UserRepository;
 import com.mrbread.dto.ClienteDTO;
-import com.mrbread.dto.ServicoDTO;
+import com.mrbread.dto.metrics.ClientesAtivosDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -198,6 +196,22 @@ public class ClienteService {
                 .status(cliente.getStatus())
                 .dataCriacao(cliente.getDataCriacao())
                 .dataAlteracao(cliente.getDataAlteracao())
+                .build();
+    }
+
+    public ClientesAtivosDTO calcularClientesAtivos(UUID orgId, String userEmail) {
+        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
+        LocalDateTime inicioMesAnterior = inicioMesAtual.minusMonths(1);
+
+        Long clientesMesAtual = clienteRepository.findClientesCadastradosMesAtual(orgId, inicioMesAtual, fimMesAtual, userEmail);
+        Long clientesMesAnterior = clienteRepository.findClientesCadastradosMesAnterior(orgId, inicioMesAnterior, inicioMesAtual, userEmail);
+
+        Long variacao = clientesMesAtual - clientesMesAnterior;
+
+        return ClientesAtivosDTO.builder()
+                .quantidade(clientesMesAtual)
+                .variacao(variacao)
                 .build();
     }
 }

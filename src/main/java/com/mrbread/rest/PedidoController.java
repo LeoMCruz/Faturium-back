@@ -43,13 +43,13 @@ public class PedidoController {
         return ResponseEntity.status(HttpStatus.OK).body(pedidoService.buscarResumoPedidos(pageable));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @GetMapping(value = "/pedidos/{id}", produces = "application/json")
     public ResponseEntity<DetalhesPedidoDTO> getOrderById(@PathVariable UUID id){
         return ResponseEntity.status(HttpStatus.OK).body(pedidoService.buscarPedidoPorId(id));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @PutMapping(value = "/pedidos", produces = "application/json")
     public ResponseEntity<PedidoDTO> updateOrder(@RequestBody PedidoDTO pedidoDTO){
         return ResponseEntity.ok().body(pedidoService.alterarPedido(pedidoDTO));
