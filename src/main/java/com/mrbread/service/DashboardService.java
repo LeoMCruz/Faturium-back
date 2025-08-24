@@ -37,6 +37,7 @@ public class DashboardService {
     }
 
     private FaturamentoTotalDTO calcularFaturamentoTotal(UUID orgId, String username) {
+        // alterar para pegar o ultimo ano de forma dinamica
         LocalDateTime dataInicio = LocalDateTime.of(2024, 1, 1, 0, 0, 0);
         Object[] result = pedidoRepository.findFaturamentoTotal(orgId, dataInicio, username);
 
@@ -110,7 +111,7 @@ public class DashboardService {
                 .build();
     }
 
-    private VendasMesDTO calcularVendasMes(UUID orgId, String username) {
+    public VendasMesDTO calcularVendasMes(UUID orgId, String username) {
         LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
         LocalDateTime inicioMesAnterior = inicioMesAtual.minusMonths(1);

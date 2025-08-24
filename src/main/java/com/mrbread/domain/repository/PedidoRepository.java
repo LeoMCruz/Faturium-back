@@ -66,6 +66,18 @@ public interface PedidoRepository extends PertenceOrganizacaoRespository<Pedido,
     FROM pedido p
     WHERE p.organizacao_id = :organizacaoId
         AND p.status = 2
+        AND p.data_criacao >= :inicioMes
+                        AND p.data_criacao < :fimMes
+    """, nativeQuery = true)
+    Object[] findVendasMesAtualOrg(UUID organizacaoId, LocalDateTime inicioMes, LocalDateTime fimMes);
+
+    @Query(value = """
+    SELECT
+        COUNT(p.id) as quantidade_pedidos,
+        COALESCE(SUM(p.preco_total), 0) as valor_total
+    FROM pedido p
+    WHERE p.organizacao_id = :organizacaoId
+        AND p.status = 2
         AND p.data_criacao >= :inicioMesAnterior
                         AND p.data_criacao < :fimMesAnterior
         AND (:username IS NULL OR p.usuario_criacao = :username)

@@ -51,6 +51,7 @@ public class SecurityConfig{
                         .requestMatchers(HttpMethod.POST, "/login/complete-profile").permitAll()
 //                        .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/payment/pix/pushinpay").permitAll()
                         // permitir acesso ao h2
 //                        .requestMatchers("/h2-console/**").permitAll()
 

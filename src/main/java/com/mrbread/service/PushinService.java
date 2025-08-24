@@ -1,0 +1,144 @@
+package com.mrbread.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mrbread.config.exception.AppException;
+import com.mrbread.config.security.SecurityUtils;
+import com.mrbread.domain.model.Payment;
+import com.mrbread.domain.model.Plan;
+import com.mrbread.domain.repository.PaymentRepository;
+import com.mrbread.domain.repository.PlanRepository;
+import com.mrbread.domain.repository.UserRepository;
+import com.mrbread.dto.PushinResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class PushinService {
+    private final PaymentRepository paymentRepository;
+    private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
+    private final PlanRepository planRepository;
+    private final OrganizationSubscriptionService organizationSubscriptionService;
+
+    @Value("${TOKEN_PUSHIN}")
+    private String tokenPushin;
+
+    public PushinResponse createBill(Long value) {
+
+        try {
+            String route = "https://b02b7d6b62bc.ngrok-free.app/payment/pix/pushinpay";
+            log.info(value.toString());
+            OkHttpClient client = new OkHttpClient().newBuilder()
+                    .build();
+            MediaType mediaType = MediaType.parse("application/json");
+            String jsonBody = String.format("{\"value\": %s, \"webhook_url\": \"%s\", \"split_rules\": []}", value,
+                    route);
+            RequestBody body = RequestBody.create(jsonBody, mediaType);
+            Request request = new Request.Builder()
+                    .url("https://api.pushinpay.com.br/api/pix/cashIn")
+                    .method("POST", body)
+                    .addHeader("Authorization", "Bearer " + tokenPushin)
+                    .addHeader("Accept", "application/json")
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new IOException("Unexpected code " + response);
+                }
+                String responseBody = response.body().string();
+
+                JsonNode jsonNode = objectMapper.readTree(responseBody);
+
+                String transactionId = getStringValue(jsonNode, "id");
+                String qrCode = getStringValue(jsonNode, "qr_code");
+                String status = getStringValue(jsonNode, "status");
+
+                var user = userRepository.findByLogin(SecurityUtils.getEmail()).orElseThrow(() -> new AppException(
+                        "Erro", "Usuário não encontrado", HttpStatus.NOT_FOUND));
+
+                var payment = Payment.builder()
+                        .user(user)
+                        .idOrg(SecurityUtils.obterOrganizacaoId())
+                        .price(value)
+                        .pushinTransactionId(transactionId)
+                        .copyPasteCode(qrCode)
+                        .status(status)
+                        .build();
+
+                paymentRepository.save(payment);
+                return PushinResponse.builder()
+                        .email(payment.getUser().getLogin())
+                        .id(payment.getId())
+                        .pushinTransactionId(payment.getPushinTransactionId())
+                        .status(payment.getStatus())
+                        .copyPasteCode(payment.getCopyPasteCode())
+                        .idOrg(payment.getIdOrg())
+                        .price(payment.getPrice())
+                        .build();
+            }
+
+        } catch (Exception e) {
+            throw new AppException("Erro ao criar cobrança PIX", e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+        }
+
+    }
+
+    private String getStringValue(JsonNode jsonNode, String fieldName) {
+        JsonNode field = jsonNode.get(fieldName);
+        return field != null && !field.isNull() ? field.asText() : null;
+    }
+
+    public void processWebHook(String id, Long value, String status, String end_to_end_id, String payer_name, String payer_national_registration) {
+        System.out.println("id: " + id + " value: " + value + " status: " + status + " end_to_end_id: " + end_to_end_id
+                + " payer_name: " + payer_name + " payer_national_registration: " + payer_national_registration);
+        try {
+            if (status.equals("paid")) {
+                var payment = paymentRepository.findByPushinTransactionId(id).orElseThrow(() -> new AppException(
+                        "Transação não encontrada ", "Essa transação não existe", HttpStatus.NOT_FOUND));
+
+                if (payment.getPrice().equals(value)) {
+                    payment.setStatus(status);
+                    payment.setEndToendId(end_to_end_id);
+                    payment.setPayerName(payer_name);
+                    payment.setPayerNationalRegistration(payer_national_registration);
+
+                    paymentRepository.save(payment);
+                    createSubscriptonFromPayment(payment);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void createSubscriptonFromPayment(Payment payment) {
+        try {
+            var plan = getPlanByPrice(payment.getPrice());
+            organizationSubscriptionService.createSubscription(payment, plan);
+
+        } catch (Exception e) {
+            throw new AppException("Erro ao criar assinatura", e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    public Plan getPlanByPrice(Long price) {
+        BigDecimal priceInReais = BigDecimal.valueOf(price)
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        System.out.println(priceInReais);
+        return planRepository.findByPrice(priceInReais).orElseThrow(() -> new AppException(
+                "Plano não encontrado", "Valor inválido", HttpStatus.NOT_FOUND));
+    }
+}
