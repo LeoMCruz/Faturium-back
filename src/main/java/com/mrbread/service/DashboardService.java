@@ -43,7 +43,7 @@ public class DashboardService {
 
         // Corrigir estrutura aninhada
         Object[] dados = (Object[]) result[0];
-        
+
         long totalPedidos = ((Number) dados[0]).longValue();
         BigDecimal faturamentoTotal = (BigDecimal) dados[1];
 
@@ -60,7 +60,8 @@ public class DashboardService {
     }
 
     private List<MaisVendidoDTO> calcularMaisVendidos(UUID orgId, String username) {
-        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
+                .withNano(0);
         LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
 
         List<Object[]> results = pedidoRepository.findTop3MaisVendidos(orgId, inicioMesAtual, fimMesAtual, username);
@@ -94,30 +95,33 @@ public class DashboardService {
     }
 
     private ItensVendidosDTO calcularItensVendidos(UUID orgId, String username) {
-        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
+                .withNano(0);
         LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
         LocalDateTime inicioMesAnterior = inicioMesAtual.minusMonths(1);
 
         Long itensMesAtual = pedidoRepository.findItensVendidosMesAtual(orgId, inicioMesAtual, fimMesAtual, username);
-        Long itensMesAnterior = pedidoRepository.findItensVendidosMesAnterior(orgId, inicioMesAnterior, inicioMesAtual, username);
+        Long itensMesAnterior = pedidoRepository.findItensVendidosMesAnterior(orgId, inicioMesAnterior, inicioMesAtual,
+                username);
 
         BigDecimal variacao = calcularVariacaoPercentual(
                 BigDecimal.valueOf(itensMesAtual),
-                BigDecimal.valueOf(itensMesAnterior)
-        );
+                BigDecimal.valueOf(itensMesAnterior));
         return ItensVendidosDTO.builder()
                 .quantidade(itensMesAtual)
                 .percentualVariacao(variacao)
                 .build();
     }
 
-    public VendasMesDTO calcularVendasMes(UUID orgId, String username) {
-        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+    private VendasMesDTO calcularVendasMes(UUID orgId, String username) {
+        LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
+                .withNano(0);
         LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
         LocalDateTime inicioMesAnterior = inicioMesAtual.minusMonths(1);
 
         Object[] mesAtual = pedidoRepository.findVendasMesAtual(orgId, inicioMesAtual, fimMesAtual, username);
-        Object[] mesAnterior = pedidoRepository.findVendasMesAnterior(orgId, inicioMesAnterior, inicioMesAtual, username);
+        Object[] mesAnterior = pedidoRepository.findVendasMesAnterior(orgId, inicioMesAnterior, inicioMesAtual,
+                username);
 
         // Corrigir estrutura aninhada
         Object[] dadosMesAtual = (Object[]) mesAtual[0];
@@ -146,7 +150,7 @@ public class DashboardService {
         Object[] ontem = pedidoRepository.findVendasOntem(orgId, inicioOntem, inicioHoje, username);
 
         // Corrigir estrutura aninhada
-        Object[] dadosHoje = (Object[]) hoje[0];  // Pegar o array interno
+        Object[] dadosHoje = (Object[]) hoje[0]; // Pegar o array interno
         Object[] dadosOntem = (Object[]) ontem[0]; // Pegar o array interno
 
         Long quantidadeHoje = ((Number) dadosHoje[0]).longValue();
@@ -160,6 +164,27 @@ public class DashboardService {
                 .valor(valorHoje)
                 .quantidadePedidos(quantidadeHoje)
                 .percentualVariacao(variacao)
+                .build();
+    }
+
+    public VendasHojeDTO previstoHoje() {
+        LocalDateTime inicioHoje = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime fimHoje = inicioHoje.plusDays(1);
+
+        UUID org = SecurityUtils.obterOrganizacaoId();
+        String username = SecurityUtils.isDefault() ? SecurityUtils.getEmail() : null;
+
+        Object[] hoje = pedidoRepository.findVendasHojePrevisto(org, inicioHoje, fimHoje, username);
+
+        // Corrigir estrutura aninhada
+        Object[] dadosHoje = (Object[]) hoje[0]; // Pegar o array interno
+
+        Long quantidadeHoje = ((Number) dadosHoje[0]).longValue();
+        BigDecimal valorHoje = (BigDecimal) dadosHoje[1];
+
+        return VendasHojeDTO.builder()
+                .valor(valorHoje)
+                .quantidadePedidos(quantidadeHoje)
                 .build();
     }
 }

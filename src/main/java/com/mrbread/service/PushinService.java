@@ -105,10 +105,10 @@ public class PushinService {
         System.out.println("id: " + id + " value: " + value + " status: " + status + " end_to_end_id: " + end_to_end_id
                 + " payer_name: " + payer_name + " payer_national_registration: " + payer_national_registration);
         try {
-            if (status.equals("paid")) {
-                var payment = paymentRepository.findByPushinTransactionId(id).orElseThrow(() -> new AppException(
-                        "Transação não encontrada ", "Essa transação não existe", HttpStatus.NOT_FOUND));
+            var payment = paymentRepository.findByPushinTransactionId(id).orElseThrow(() -> new AppException(
+                    "Transação não encontrada ", "Essa transação não existe", HttpStatus.NOT_FOUND));
 
+            if (status.equals("paid")) {
                 if (payment.getPrice().equals(value)) {
                     payment.setStatus(status);
                     payment.setEndToendId(end_to_end_id);
@@ -118,7 +118,11 @@ public class PushinService {
                     paymentRepository.save(payment);
                     createSubscriptonFromPayment(payment);
                 }
+            }else{
+                payment.setStatus(status);
+                paymentRepository.save(payment);
             }
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

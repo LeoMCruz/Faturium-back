@@ -36,6 +36,19 @@ public interface PedidoRepository extends PertenceOrganizacaoRespository<Pedido,
         COALESCE(SUM(p.preco_total), 0) as valor_total
     FROM pedido p
     WHERE p.organizacao_id = :organizacaoId
+        AND p.status != 4
+        AND p.data_criacao >= :inicioHoje
+                        AND p.data_criacao < :fimHoje
+        AND (:username IS NULL OR p.usuario_criacao = :username)
+    """, nativeQuery = true)
+    Object[] findVendasHojePrevisto(UUID organizacaoId, LocalDateTime inicioHoje, LocalDateTime fimHoje, String username);
+
+    @Query(value = """
+    SELECT
+        COUNT(p.id) as quantidade_pedidos,
+        COALESCE(SUM(p.preco_total), 0) as valor_total
+    FROM pedido p
+    WHERE p.organizacao_id = :organizacaoId
         AND p.status = 2
         AND p.data_criacao >= :inicioOntem
                         AND p.data_criacao < :fimOntem
@@ -65,7 +78,7 @@ public interface PedidoRepository extends PertenceOrganizacaoRespository<Pedido,
         COALESCE(SUM(p.preco_total), 0) as valor_total
     FROM pedido p
     WHERE p.organizacao_id = :organizacaoId
-        AND p.status = 2
+        AND p.status != 4
         AND p.data_criacao >= :inicioMes
                         AND p.data_criacao < :fimMes
     """, nativeQuery = true)

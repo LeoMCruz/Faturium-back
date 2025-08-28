@@ -25,4 +25,5 @@ public class PedidoDTO {
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
+    private String obs;
 }

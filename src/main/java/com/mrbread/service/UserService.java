@@ -26,6 +26,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final OrganizacaoRepository organizacaoRepository;
+    private final OrganizationSubscriptionService organizationSubscriptionService;
 
     //cria usuario principal (admin), junto com a criação da organização.
     @Transactional
@@ -67,6 +68,8 @@ public class UserService {
 
         userRepository.save(user);
 
+        organizationSubscriptionService.createDefaultSubscription(organizacao.getIdOrg());
+
         return UserDTO.builder()
                 .id(user.getId())
                 .username(user.getLogin())
@@ -80,6 +83,13 @@ public class UserService {
     //cria novo usuario dentro da organização
     @Transactional
     public UserDTO salvarColaborador(UserDTO userDTO){
+        if(!organizationSubscriptionService.canOrganizationAddUser(SecurityUtils.obterOrganizacaoId())){
+            throw new AppException(
+                    "Limite de Usuários atingido",
+                    "Faça o upgrade do seu plano para adicionar mais usuários",
+                    HttpStatus.CONFLICT
+            );
+        }
         if(userRepository.existsByLogin(userDTO.getUsername()))
             throw new AppException("Email já cadastrado", "Tente novamente", HttpStatus.CONFLICT);
 
@@ -96,6 +106,7 @@ public class UserService {
                 .profileComplete(true)
                 .perfilAcesso(userDTO.getPerfilAcesso())
                 .organizacao(organizacao)
+                .authProvider(AuthProvider.DEFAULT)
                 .dataCriacao(LocalDateTime.now())
                 .dataAlteracao(LocalDateTime.now())
                 .build();
@@ -225,7 +236,7 @@ public class UserService {
         var user = userRepository.findById(userDTO.getId())
                 .orElseThrow(() -> new AppException("Usuário não encontrado",
                         "Email inválido",
-                        HttpStatus.NOT_FOUND));;
+                        HttpStatus.NOT_FOUND));
 
         Organizacao organizacao = Organizacao.builder()
                 .nomeOrganizacao(userDTO.getNomeOrganizacao())

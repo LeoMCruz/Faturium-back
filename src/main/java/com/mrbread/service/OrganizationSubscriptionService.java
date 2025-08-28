@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -80,6 +81,7 @@ public class OrganizationSubscriptionService {
 
     public boolean canOrganizationCreateOrders(UUID organizationId) {
         OrganizationSubscription subscription = getCurrentSubscriptionEntity(organizationId);
+        System.out.println(subscription);
         if (subscription == null)
             return false;
 
@@ -135,8 +137,11 @@ public class OrganizationSubscriptionService {
         LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
                 .withNano(0);
         LocalDateTime fimMesAtual = inicioMesAtual.plusMonths(1);
-        var orders = pedidoRepository.findVendasMesAtualOrg(organizationId, inicioMesAtual, fimMesAtual);
-        return ((Number) orders[0]).longValue();
+        Object[] mesAtual = pedidoRepository.findVendasMesAtualOrg(organizationId, inicioMesAtual, fimMesAtual);
+        Object[] dadosMesAtual = (Object[]) mesAtual[0];
+        Long quantidadeMesAtual = ((Number) dadosMesAtual[0]).longValue();
+        System.out.println("orders"+ quantidadeMesAtual);
+        return quantidadeMesAtual;
     }
 
     private Long getCurrentUserCount(UUID organizationId) {
@@ -162,5 +167,26 @@ public class OrganizationSubscriptionService {
                 .createdAt(subscription.getCreatedAt())
                 .updatedAt(subscription.getUpdatedAt())
                 .build();
+    }
+
+    public void createDefaultSubscription (UUID idOrg){
+        var organization = organizacaoRepository.findById(idOrg)
+                .orElseThrow(() -> new AppException("Organização não encontrada", "ID inválido", HttpStatus.NOT_FOUND));
+
+        var freePlan = planRepository.findByName("Free").orElseThrow(() -> new AppException("Plano não encontrado", "ID inválido", HttpStatus.NOT_FOUND));
+
+        LocalDateTime startDate = LocalDateTime.now();
+
+        OrganizationSubscription subscription = OrganizationSubscription.builder()
+                .organization(organization)
+                .plan(freePlan)
+                .status(SubscriptionStatus.ACTIVE)
+                .startDate(startDate)
+                .endDate(calculateEndDate(LocalDateTime.now(), freePlan.getBillingCycle()))
+                .autoRenew(true)
+                .paymentMethod("GRATUITO")
+                .build();
+
+        subscriptionRepository.save(subscription);
     }
 }

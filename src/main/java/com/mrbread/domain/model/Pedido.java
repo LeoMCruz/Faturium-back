@@ -47,4 +47,6 @@ public class Pedido implements PertenceOrganizacao{
     private LocalDateTime dataCriacao;
     @Column
     private LocalDateTime dataAlteracao;
+    @Column
+    private String obs;
 }

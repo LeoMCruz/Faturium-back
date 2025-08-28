@@ -23,4 +23,5 @@ public class ResumoPedidoDTO {
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
+    private String usuarioCriacao;
 }

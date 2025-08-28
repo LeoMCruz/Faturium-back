@@ -29,9 +29,17 @@ public class PedidoService {
         private final ProdutoRepository produtoRepository;
         private final ServicoRepository servicoRepository;
         private final PedidoIdService pedidoIdService;
+        private final OrganizationSubscriptionService organizationSubscriptionService;
 
         @Transactional
         public PedidoDTO criarPedido(PedidoDTO pedidoDto) {
+                if(!organizationSubscriptionService.canOrganizationCreateOrders(SecurityUtils.obterOrganizacaoId())){
+                        throw new AppException(
+                                "Limite de Pedidos atingido",
+                                "Faça o upgrade do seu plano para adicionar mais pedidos",
+                                HttpStatus.CONFLICT
+                        );
+                }
                 if (pedidoDto == null || pedidoDto.getItens() == null || pedidoDto.getItens().isEmpty()) {
                         throw new AppException(
                                 "Itens do pedido vazios",
@@ -69,6 +77,7 @@ public class PedidoService {
                         .dataCriacao(LocalDateTime.now())
                         .dataAlteracao(LocalDateTime.now())
                         .itens(new ArrayList<>())
+                        .obs(pedidoDto.getObs())
                         .build();
 
                 List<ItemPedido> itens = pedidoDto.getItens().stream()
@@ -143,6 +152,7 @@ public class PedidoService {
                         .user(salvarPedido.getUser().getLogin())
                         .cliente(salvarPedido.getCliente().getId())
                         .nomeFantasiaCliente(cliente.getNomeFantasia())
+                        .obs(salvarPedido.getObs())
                         .status(salvarPedido.getStatus())
                         .dataCriacao(salvarPedido.getDataCriacao())
                         .dataAlteracao(salvarPedido.getDataAlteracao())
@@ -188,6 +198,7 @@ public class PedidoService {
                                         .razaoSocial(pedido.getCliente().getRazaoSocial())
                                         .precoTotal(pedido.getPrecoTotal())
                                         .status(pedido.getStatus())
+                                        .usuarioCriacao(pedido.getUser().getLogin())
                                         .dataCriacao(pedido.getDataCriacao())
                                         .dataAlteracao(pedido.getDataAlteracao())
                                         .build()).collect(Collectors.toList());
@@ -199,6 +210,7 @@ public class PedidoService {
                                         .cliente(pedido.getCliente().getNomeFantasia())
                                         .razaoSocial(pedido.getCliente().getRazaoSocial())
                                         .precoTotal(pedido.getPrecoTotal())
+                                        .usuarioCriacao(pedido.getUser().getLogin())
                                         .status(pedido.getStatus())
                                         .dataCriacao(pedido.getDataCriacao())
                                         .dataAlteracao(pedido.getDataAlteracao())
@@ -243,6 +255,8 @@ public class PedidoService {
                         .cnpj(pedido.getCliente().getCnpj())
                         .cidade(pedido.getCliente().getCidade())
                         .estado(pedido.getCliente().getEstado())
+                        .obs(pedido.getObs())
+                        .usuarioCriacao(pedido.getUser().getLogin())
                         .nomeFantasiaCliente(pedido.getNomeFantasiaCliente())
                         .status(pedido.getStatus())
                         .dataCriacao(pedido.getDataCriacao())
@@ -319,6 +333,8 @@ public class PedidoService {
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 pedido.setPrecoTotal(total);
 
+                pedido.setObs(pedidoDTO.getObs());
+
                 pedido.setDataAlteracao(LocalDateTime.now());
 
                 var alterarPedido = pedidoRepository.save(pedido);
@@ -352,6 +368,7 @@ public class PedidoService {
                         .cliente(pedido.getCliente().getId())
                         .nomeFantasiaCliente(cliente.getNomeFantasia())
                         .status(pedido.getStatus())
+                        .obs(pedido.getObs())
                         .dataCriacao(pedido.getDataCriacao())
                         .dataAlteracao(pedido.getDataAlteracao())
                         .build();

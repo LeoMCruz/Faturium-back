@@ -5,6 +5,7 @@ import com.mrbread.dto.AuthenticationResponse;
 import com.mrbread.dto.GoogleAuthRequest;
 import com.mrbread.dto.UserDTO;
 import com.mrbread.dto.metrics.DashboardFaturamentoDTO;
+import com.mrbread.dto.metrics.VendasHojeDTO;
 import com.mrbread.service.AuthenticationService;
 import com.mrbread.service.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,21 @@ public class DashboardController {
     public ResponseEntity<DashboardFaturamentoDTO> dashboard(){
         try {
             DashboardFaturamentoDTO dados = dashboardService.obterDashboard();
+            return ResponseEntity.ok(dados);
+        } catch (IllegalStateException e) {
+            log.warn("Usuário sem organização tentou acessar dashboard: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Erro ao obter dados de faturamento", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
+    @GetMapping(value = "/dashboard/today", produces = "application/json")
+    public ResponseEntity<VendasHojeDTO> previstoHoje(){
+        try {
+            VendasHojeDTO dados = dashboardService.previstoHoje();
             return ResponseEntity.ok(dados);
         } catch (IllegalStateException e) {
             log.warn("Usuário sem organização tentou acessar dashboard: {}", e.getMessage());

@@ -30,4 +30,6 @@ public class DetalhesPedidoDTO {
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
+    private String usuarioCriacao;
+    private String obs;
 }
