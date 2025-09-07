@@ -21,15 +21,20 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
-public class SecurityConfig{
+public class SecurityConfig {
 
     private final JwtUserDetailsService JWTUserDetailsService;
-//    private final JWTAuthenticationFilter authenticationFilter;
+    // private final JWTAuthenticationFilter authenticationFilter;
     private final UserRepository userRepository;
 
     @Bean
@@ -45,30 +50,29 @@ public class SecurityConfig{
                         .requestMatchers(HttpMethod.POST, "/login").permitAll()
                         // acesso publico para login com google
                         .requestMatchers(HttpMethod.POST, "/login/google").permitAll()
-                        //linkar conta google com conta default
+                        // linkar conta google com conta default
                         .requestMatchers(HttpMethod.POST, "/login/linkgoogle").permitAll()
-                        //completar cadastro e retornar token valido
+                        // completar cadastro e retornar token valido
                         .requestMatchers(HttpMethod.POST, "/login/complete-profile").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/login").permitAll()
+                        // .requestMatchers(HttpMethod.GET, "/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/payment/pix/pushinpay").permitAll()
                         // permitir acesso ao h2
-//                        .requestMatchers("/h2-console/**").permitAll()
+                        // .requestMatchers("/h2-console/**").permitAll()
 
                         // Qualquer outra requisição precisa de autenticação
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
 
                 // Configuração do gerenciamento de sessão
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // Adiciona o filtro JWT antes do filtro padrão de autenticação
                 .addFilterBefore(authenticationFilter(userRepository), UsernamePasswordAuthenticationFilter.class);
 
         // Configuração h2
-//        http.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+        // http.headers(headers ->
+        // headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
 
         return http.build();
     }

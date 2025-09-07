@@ -1,23 +1,23 @@
 version: '3.8'
 services:
-  mrbread-app:
+  faturium:
     build: .
-    container_name: mrbread-app
+    container_name: faturium
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://host.docker.internal:3306/mrbread
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=system.123
-      - REPORTS_PATH=/app/reports
+      - SPRING_DATASOURCE_URL=${DB_URL}
+        - SPRING_DATASOURCE_USERNAME=${DB_USER}
+        - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+        - TOKEN_PASSWORD=${TOKEN_PASSWORD}
+        - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
+        - TOKEN_PUSHIN=${TOKEN_PUSHIN}
     restart: unless-stopped
-    volumes:
-      - ./reports:/app/reports  # Volume compartilhado para PDFs
     networks:
-      - mrbread-network
+      - faturium-network
 
 networks:
-  mrbread-network:
+  faturium-network:
     driver: bridge
 
 volumes:

@@ -79,7 +79,7 @@ public class AuthenticationService {
             if (existingUser.isPresent()) {
                 User user = existingUser.get();
 
-                if (user.getGoogleId() != null) {
+                if (user.getGoogleId().equals(sub) ) {
                     return generateJWT(user);
                 } else {
                     throw new AppException(

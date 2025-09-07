@@ -5,6 +5,7 @@ import com.mrbread.config.security.SecurityUtils;
 import com.mrbread.domain.model.*;
 import com.mrbread.domain.repository.*;
 import com.mrbread.dto.SubscriptionDTO;
+import jdk.jshell.JShell;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -29,6 +30,12 @@ public class OrganizationSubscriptionService {
     public void createSubscription(Payment payment, Plan plan) {
         var organization = organizacaoRepository.findById(payment.getIdOrg())
                 .orElseThrow(() -> new AppException("Organização não encontrada", "ID inválido", HttpStatus.NOT_FOUND));
+
+        var currentSub = getCurrentSubscriptionEntity(payment.getIdOrg());
+
+        if(currentSub.getPlan().getId().equals(plan.getId())){
+            extendSubscription(plan, currentSub);
+        }
 
         cancelCurrentSubscription(payment.getIdOrg());
 
@@ -107,8 +114,10 @@ public class OrganizationSubscriptionService {
             subscription.setStatus(SubscriptionStatus.EXPIRED);
             subscriptionRepository.save(subscription);
 
-            // Enviar notificação para os administradores da organização
-            // notifyOrganizationAboutExpiredSubscription(subscription);
+            var activeSubscriptions = subscriptionRepository.findActiveByOrganizationIdOrg(subscription.getOrganization().getIdOrg(), SubscriptionStatus.ACTIVE);
+            if(activeSubscriptions.isEmpty()){
+                createDefaultSubscription(subscription.getOrganization().getIdOrg());
+            }
         }
     }
 
@@ -170,7 +179,7 @@ public class OrganizationSubscriptionService {
     }
 
     public void createDefaultSubscription (UUID idOrg){
-        var organization = organizacaoRepository.findById(idOrg)
+        var organization = organizacaoRepository.findByIdOrg(idOrg)
                 .orElseThrow(() -> new AppException("Organização não encontrada", "ID inválido", HttpStatus.NOT_FOUND));
 
         var freePlan = planRepository.findByName("Free").orElseThrow(() -> new AppException("Plano não encontrado", "ID inválido", HttpStatus.NOT_FOUND));
@@ -188,5 +197,23 @@ public class OrganizationSubscriptionService {
                 .build();
 
         subscriptionRepository.save(subscription);
+    }
+
+    private void extendSubscription(Plan plan, OrganizationSubscription currentSub){
+
+        LocalDateTime endDate = calculateEndDate(currentSub.getEndDate(), plan.getBillingCycle());
+
+        OrganizationSubscription subscription = OrganizationSubscription.builder()
+                .organization(currentSub.getOrganization())
+                .plan(plan)
+                .status(SubscriptionStatus.ACTIVE)
+                .startDate(currentSub.getEndDate())
+                .endDate(endDate)
+                .autoRenew(true)
+                .paymentMethod("PIX")
+                .build();
+
+        OrganizationSubscription savedSubscription = subscriptionRepository.save(subscription);
+        convertToDTO(savedSubscription);
     }
 }

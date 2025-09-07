@@ -16,14 +16,13 @@ public class PlanController {
 
     private final PlanService planService;
 
-    // Endpoints públicos (para visualização)
-    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping("/plans")
     public ResponseEntity<List<PlanDTO>> getAllPlans() {
         return ResponseEntity.ok(planService.getAllPlans());
     }
 
-    @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
+    @PreAuthorize("hasAuthority('ROLE_MANAGER')")
     @GetMapping("/plans/{id}")
     public ResponseEntity<PlanDTO> getPlanById(@PathVariable UUID id) {
         return ResponseEntity.ok(planService.getPlanById(id));
@@ -35,11 +34,11 @@ public class PlanController {
 //        return ResponseEntity.ok(planService.getActivePlans());
 //    }
 //
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PostMapping("/plans")
-    public ResponseEntity<PlanDTO> createPlan(@RequestBody PlanDTO planDTO) {
-        return ResponseEntity.ok(planService.createPlan(planDTO));
-    }
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+//    @PostMapping("/plans")
+//    public ResponseEntity<PlanDTO> createPlan(@RequestBody PlanDTO planDTO) {
+//        return ResponseEntity.ok(planService.createPlan(planDTO));
+//    }
 //
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 //    @PutMapping("/plans/{id}")

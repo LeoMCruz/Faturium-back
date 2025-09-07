@@ -256,6 +256,7 @@ public class UserService {
         user.setDataAlteracao(LocalDateTime.now());
         user.setProfileComplete(true);
         userRepository.save(user);
+        organizationSubscriptionService.createDefaultSubscription(organizacao.getIdOrg());
         return user;
     }
 }

@@ -23,15 +23,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 2) Cria usuário não-root para executar a aplicação
-RUN useradd -r -s /bin/false mrbread
+RUN useradd -r -s /bin/false faturium
 
 WORKDIR /app
 
 # 3) Copia o JAR gerado no estágio de build
 COPY --from=build /app/target/*.jar app.jar
-RUN chown mrbread:mrbread app.jar
+RUN chown faturium:faturium app.jar
 
-USER mrbread
+USER faturium
 
 EXPOSE 8080
 

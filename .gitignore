@@ -20,6 +20,8 @@ pasta_exemplo/
 *.iml
 *.ipr
 
+*.env
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/

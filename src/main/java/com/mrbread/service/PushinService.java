@@ -9,12 +9,14 @@ import com.mrbread.domain.model.Plan;
 import com.mrbread.domain.repository.PaymentRepository;
 import com.mrbread.domain.repository.PlanRepository;
 import com.mrbread.domain.repository.UserRepository;
+import com.mrbread.dto.PushinRequest;
 import com.mrbread.dto.PushinResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -31,19 +33,21 @@ public class PushinService {
     private final UserRepository userRepository;
     private final PlanRepository planRepository;
     private final OrganizationSubscriptionService organizationSubscriptionService;
+    private final PaymentSSEService paymentSSEService;
 
     @Value("${TOKEN_PUSHIN}")
     private String tokenPushin;
 
-    public PushinResponse createBill(Long value) {
+    public PushinResponse createBill(PushinRequest pushinRequest) {
 
         try {
-            String route = "https://b02b7d6b62bc.ngrok-free.app/payment/pix/pushinpay";
-            log.info(value.toString());
+            String route = "https://4e48f55f3e4a.ngrok-free.app/payment/pix/pushinpay";
+            log.info(pushinRequest.getPrice().toString());
             OkHttpClient client = new OkHttpClient().newBuilder()
                     .build();
             MediaType mediaType = MediaType.parse("application/json");
-            String jsonBody = String.format("{\"value\": %s, \"webhook_url\": \"%s\", \"split_rules\": []}", value,
+            String jsonBody = String.format("{\"value\": %s, \"webhook_url\": \"%s\", \"split_rules\": []}",
+                    pushinRequest.getPrice(),
                     route);
             RequestBody body = RequestBody.create(jsonBody, mediaType);
             Request request = new Request.Builder()
@@ -72,7 +76,7 @@ public class PushinService {
                 var payment = Payment.builder()
                         .user(user)
                         .idOrg(SecurityUtils.obterOrganizacaoId())
-                        .price(value)
+                        .price(pushinRequest.getPrice())
                         .pushinTransactionId(transactionId)
                         .copyPasteCode(qrCode)
                         .status(status)
@@ -101,7 +105,8 @@ public class PushinService {
         return field != null && !field.isNull() ? field.asText() : null;
     }
 
-    public void processWebHook(String id, Long value, String status, String end_to_end_id, String payer_name, String payer_national_registration) {
+    public void processWebHook(String id, Long value, String status, String end_to_end_id, String payer_name,
+            String payer_national_registration) {
         System.out.println("id: " + id + " value: " + value + " status: " + status + " end_to_end_id: " + end_to_end_id
                 + " payer_name: " + payer_name + " payer_national_registration: " + payer_national_registration);
         try {
@@ -117,14 +122,15 @@ public class PushinService {
 
                     paymentRepository.save(payment);
                     createSubscriptonFromPayment(payment);
+                    paymentSSEService.notifyPaymentProcessed(payment.getIdOrg());
                 }
-            }else{
+            } else {
                 payment.setStatus(status);
                 paymentRepository.save(payment);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Erro ao processar webhook: {}", e.getMessage(), e);
         }
     }
 

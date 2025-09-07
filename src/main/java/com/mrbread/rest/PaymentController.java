@@ -1,15 +1,13 @@
 package com.mrbread.rest;
 
 import com.mrbread.domain.model.Payment;
+import com.mrbread.dto.PushinRequest;
 import com.mrbread.dto.PushinResponse;
 import com.mrbread.service.PushinService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,8 +16,8 @@ public class PaymentController {
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @PostMapping(value = "/payment/pix", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<PushinResponse> createPix(@RequestBody Long value){
-        return ResponseEntity.ok().body(pushinService.createBill(value));
+    public ResponseEntity<PushinResponse> createPix(@RequestBody PushinRequest pushinRequest){
+        return ResponseEntity.ok().body(pushinService.createBill(pushinRequest));
     }
 
     @PostMapping(value = "/payment/pix/pushinpay", consumes = "application/x-www-form-urlencoded")
