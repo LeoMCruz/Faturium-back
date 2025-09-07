@@ -3,7 +3,6 @@ version: '3.8'
 services:
   faturium-app:
     build: .
-    container_name: faturium-app
     ports:
       - "8080:8080"
     environment:
@@ -20,8 +19,8 @@ services:
       - ./reports:/app/reports
       - ./logs:/app/logs
     networks:
-      - faturium-network
+      - dokploy-network    # usa a mesma network do DB
 
 networks:
-  faturium-network:
-    driver: bridge
+  dokploy-network:
+    external: true
