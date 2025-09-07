@@ -1,24 +1,27 @@
 version: '3.8'
+
 services:
-  faturium:
+  faturium-app:
     build: .
-    container_name: faturium
+    container_name: faturium-app
     ports:
       - "8080:8080"
     environment:
+      - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${DB_URL}
-        - SPRING_DATASOURCE_USERNAME=${DB_USER}
-        - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-        - TOKEN_PASSWORD=${TOKEN_PASSWORD}
-        - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
-        - TOKEN_PUSHIN=${TOKEN_PUSHIN}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - TOKEN_PASSWORD=${TOKEN_PASSWORD}
+      - GOOGLE_WEB_CLIENT_ID=${GOOGLE_WEB_CLIENT_ID}
+      - TOKEN_PUSHIN=${TOKEN_PUSHIN}
+      - REPORTS_PATH=/app/reports
     restart: unless-stopped
+    volumes:
+      - ./reports:/app/reports
+      - ./logs:/app/logs
     networks:
       - faturium-network
 
 networks:
   faturium-network:
     driver: bridge
-
-volumes:
-  redis_data:

@@ -17,15 +17,17 @@ FROM openjdk:17-slim
 # 1) Instala bibliotecas de fontes exigidas pelo libfontmanager
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        libfreetype6 \
-        libfontconfig1 \
-        fonts-dejavu-core && \
+    libfreetype6 \
+    libfontconfig1 \
+    fonts-dejavu-core && \
     rm -rf /var/lib/apt/lists/*
 
 # 2) Cria usuário não-root para executar a aplicação
 RUN useradd -r -s /bin/false faturium
 
 WORKDIR /app
+
+RUN mkdir -p /app/logs && chown faturium:faturium /app/logs
 
 # 3) Copia o JAR gerado no estágio de build
 COPY --from=build /app/target/*.jar app.jar
@@ -36,7 +38,8 @@ USER faturium
 EXPOSE 8080
 
 # 4) Flags da JVM + modo headless
-ENV JAVA_OPTS="-Xmx512m -Xms256m" \
-    JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
+ENV JAVA_OPTS="-Xmx1024m -Xms512m -XX:+UseG1GC" \
+    JAVA_TOOL_OPTIONS="-Djava.awt.headless=true" \
+    SPRING_PROFILES_ACTIVE=prod
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

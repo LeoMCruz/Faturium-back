@@ -1,0 +1,15 @@
+package com.faturium.domain.repository;
+
+import com.faturium.domain.model.Organizacao;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+public interface OrganizacaoRepository extends JpaRepository<Organizacao, UUID> {
+    boolean existsByCnpj(String cnpj);
+
+    Optional<Organizacao> findByIdOrg(UUID idOrg);
+
+    boolean existsByIdOrg(UUID idOrg);
+}
