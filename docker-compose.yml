@@ -3,8 +3,6 @@ version: '3.8'
 services:
   faturium-app:
     build: .
-    ports:
-      - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${DB_URL}
