@@ -275,6 +275,7 @@ public class PedidoService {
                 pedidoRepository.save(pedido);
         }
 
+        @Transactional
         public PedidoDTO alterarPedido(PedidoDTO pedidoDTO){
                 var pedido = pedidoRepository.findById(pedidoDTO.getId(), SecurityUtils.obterOrganizacaoId())
                         .orElseThrow(() -> new AppException("Pedido não encontrado",
