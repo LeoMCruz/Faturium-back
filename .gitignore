@@ -20,7 +20,19 @@ pasta_exemplo/
 *.iml
 *.ipr
 
-*.env
+# Arquivos de ambiente
+.env
+.env.local
+.env.production
+.env.staging
+
+# Logs
+logs/
+*.log
+
+# Arquivos de exemplo
+.env.example
+env.example
 
 ### NetBeans ###
 /nbproject/private/
