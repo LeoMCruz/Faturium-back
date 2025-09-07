@@ -8,6 +8,7 @@ import com.faturium.dto.PlanDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,18 +20,21 @@ public class PlanService {
 
     private final PlanRepository planRepository;
 
+    @Transactional
     public List<PlanDTO> getAllPlans() {
         return planRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public PlanDTO getPlanById(UUID id) {
         Plan plan = planRepository.findById(id)
                 .orElseThrow(() -> new AppException("Plano não encontrado", "ID inválido", HttpStatus.NOT_FOUND));
         return convertToDTO(plan);
     }
 
+    @Transactional
     public PlanDTO createPlan(PlanDTO planDTO) {
         if(planRepository.findByName(planDTO.getName()).isPresent()){
             throw new AppException("Plano ja existe",  "Ja existe um plano com esse nome", HttpStatus.CONFLICT);
@@ -106,6 +110,7 @@ public class PlanService {
 //        return convertToDTO(defaultPlan);
 //    }
 
+    @Transactional
     private void validatePlanLimits(PlanDTO planDTO) {
         if (planDTO.getMaxUsers() != null && planDTO.getMaxUsers() < 1) {
             throw new AppException("Limite inválido", "Máximo de usuários deve ser pelo menos 1", HttpStatus.BAD_REQUEST);
@@ -116,6 +121,7 @@ public class PlanService {
         }
     }
 
+    @Transactional
     private PlanDTO convertToDTO(Plan plan) {
         return PlanDTO.builder()
                 .id(plan.getId())

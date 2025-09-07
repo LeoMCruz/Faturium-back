@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ public class OrganizationSubscriptionService {
     private final PedidoRepository pedidoRepository;
     private final UserRepository userRepository;
 
+    @Transactional
     public void createSubscription(Payment payment, Plan plan) {
         var organization = organizacaoRepository.findById(payment.getIdOrg())
                 .orElseThrow(() -> new AppException("Organização não encontrada", "ID inválido", HttpStatus.NOT_FOUND));
@@ -54,17 +56,20 @@ public class OrganizationSubscriptionService {
         convertToDTO(savedSubscription);
     }
 
+    @Transactional
     public SubscriptionDTO getCurrentSubscription() {
         OrganizationSubscription subscription = getCurrentSubscriptionEntity(SecurityUtils.obterOrganizacaoId());
         return subscription != null ? convertToDTO(subscription) : null;
     }
 
+    @Transactional
     public List<SubscriptionDTO> getOrganizationSubscriptions() {
         return subscriptionRepository.findByOrganizationIdOrg(SecurityUtils.obterOrganizacaoId()).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public void cancelSubscription(String reason) {
         OrganizationSubscription subscription = getCurrentSubscriptionEntity(SecurityUtils.obterOrganizacaoId());
         if (subscription != null) {
@@ -84,6 +89,7 @@ public class OrganizationSubscriptionService {
     // }
     // }
 
+    @Transactional
     public boolean canOrganizationCreateOrders(UUID organizationId) {
         OrganizationSubscription subscription = getCurrentSubscriptionEntity(organizationId);
         System.out.println(subscription);
@@ -94,6 +100,7 @@ public class OrganizationSubscriptionService {
         return getOrdersThisMonth(organizationId) < subscription.getPlan().getMaxOrdersPerMonth();
     }
 
+    @Transactional
     public boolean canOrganizationAddUser(UUID organizationId) {
         OrganizationSubscription subscription = getCurrentSubscriptionEntity(organizationId);
         if (subscription == null)
@@ -119,6 +126,7 @@ public class OrganizationSubscriptionService {
         }
     }
 
+    @Transactional
     private LocalDateTime calculateEndDate(LocalDateTime startDate, BillingCycle billingCycle) {
         return switch (billingCycle) {
             case YEARLY -> startDate.plusYears(1);
@@ -127,10 +135,12 @@ public class OrganizationSubscriptionService {
         };
     }
 
+    @Transactional
     private OrganizationSubscription getCurrentSubscriptionEntity(UUID organizationId) {
         return subscriptionRepository.findByOrganizationIdOrgAndStatus(organizationId, SubscriptionStatus.ACTIVE);
     }
 
+    @Transactional
     private void cancelCurrentSubscription(UUID idOrg) {
         OrganizationSubscription current = getCurrentSubscriptionEntity(idOrg);
         if (current != null) {
@@ -140,6 +150,7 @@ public class OrganizationSubscriptionService {
         }
     }
 
+    @Transactional
     private Long getOrdersThisMonth(UUID organizationId) {
         LocalDateTime inicioMesAtual = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0)
                 .withNano(0);
@@ -151,10 +162,12 @@ public class OrganizationSubscriptionService {
         return quantidadeMesAtual;
     }
 
+    @Transactional
     private Long getCurrentUserCount(UUID organizationId) {
         return userRepository.countActiveUsersByOrganization(organizationId);
     }
 
+    @Transactional
     private SubscriptionDTO convertToDTO(OrganizationSubscription subscription) {
         return SubscriptionDTO.builder()
                 .id(subscription.getId())
@@ -176,6 +189,7 @@ public class OrganizationSubscriptionService {
                 .build();
     }
 
+    @Transactional
     public void createDefaultSubscription (UUID idOrg){
         var organization = organizacaoRepository.findByIdOrg(idOrg)
                 .orElseThrow(() -> new AppException("Organização não encontrada", "ID inválido", HttpStatus.NOT_FOUND));
@@ -197,6 +211,7 @@ public class OrganizationSubscriptionService {
         subscriptionRepository.save(subscription);
     }
 
+    @Transactional
     private void extendSubscription(Plan plan, OrganizationSubscription currentSub){
 
         LocalDateTime endDate = calculateEndDate(currentSub.getEndDate(), plan.getBillingCycle());
