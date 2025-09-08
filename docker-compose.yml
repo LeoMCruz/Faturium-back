@@ -29,7 +29,7 @@ services:
     depends_on:
       - faturium-app
     expose:
-      - "80"  # ✅ APENAS expose (interno), NÃO ports (externo)
+      - "7594"  # ✅ APENAS expose (interno), NÃO ports (externo)
     logging:
       driver: "json-file"
       options:
