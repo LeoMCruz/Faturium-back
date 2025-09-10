@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
+@RequestMapping("/api/v1")
 @RestController
 @RequiredArgsConstructor
 public class PedidoController {
