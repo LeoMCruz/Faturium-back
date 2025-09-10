@@ -42,16 +42,16 @@ public class SecurityConfig {
                 // Configuração das regras de autorização
                 .authorizeHttpRequests(auth -> auth
                         // Permitir acesso público ao endpoint de login e criação de usuário
-                        .requestMatchers(HttpMethod.POST, "/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/login").permitAll()
                         // acesso publico para login com google
-                        .requestMatchers(HttpMethod.POST, "/login/google").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/login/google").permitAll()
                         // linkar conta google com conta default
-                        .requestMatchers(HttpMethod.POST, "/login/linkgoogle").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/login/linkgoogle").permitAll()
                         // completar cadastro e retornar token valido
-                        .requestMatchers(HttpMethod.POST, "/login/complete-profile").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/login/complete-profile").permitAll()
                         // .requestMatchers(HttpMethod.GET, "/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/payment/pix/pushinpay").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payment/pix/pushinpay").permitAll()
                         // permitir acesso ao h2
                         // .requestMatchers("/h2-console/**").permitAll()
 
