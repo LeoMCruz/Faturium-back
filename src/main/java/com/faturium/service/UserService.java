@@ -203,6 +203,11 @@ public class UserService {
                         "A senha atual informada está incorreta",
                         HttpStatus.UNAUTHORIZED);
             }
+            if(userDTO.getPassword().equals(userDTO.getNewPassword())){
+                throw new AppException("Nova senha igual a senha antiga",
+                        "A senha atual deve ser diferente da senha antiga",
+                        HttpStatus.UNAUTHORIZED);
+            }
             user.setSenha(passwordEncoder.encode(userDTO.getNewPassword()));
         }
 

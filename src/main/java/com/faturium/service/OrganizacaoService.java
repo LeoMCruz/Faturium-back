@@ -1,6 +1,7 @@
 package com.faturium.service;
 
 import com.faturium.config.exception.AppException;
+import com.faturium.config.security.SecurityUtils;
 import com.faturium.domain.model.Organizacao;
 import com.faturium.domain.repository.OrganizacaoRepository;
 import com.faturium.dto.OrganizacaoDTO;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class OrganizacaoService {
@@ -16,7 +19,7 @@ public class OrganizacaoService {
 
     @Transactional
     public OrganizacaoDTO atualizarOrganizacao(OrganizacaoDTO organizacaoDTO){
-        var organizacao = organizacaoRepository.findByIdOrg(organizacaoDTO.getIdOrg()).orElseThrow( () -> new AppException(
+        var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId()).orElseThrow( () -> new AppException(
                 "ID inválido",
                 "Organização não encontrada",
                 HttpStatus.BAD_REQUEST
@@ -37,6 +40,7 @@ public class OrganizacaoService {
         if(organizacaoDTO.getTelefone() != null && !organizacaoDTO.getTelefone().isEmpty()){
             organizacao.setTelefone(organizacaoDTO.getTelefone());
         }
+        organizacao.setDataAlteracao(LocalDateTime.now());
         organizacaoRepository.save(organizacao);
         return OrganizacaoDTO.builder()
                 .nomeOrganizacao(organizacao.getNomeOrganizacao())
