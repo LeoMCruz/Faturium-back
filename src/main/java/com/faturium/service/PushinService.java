@@ -39,7 +39,7 @@ public class PushinService {
     public PushinResponse createBill(PushinRequest pushinRequest) {
 
         try {
-            String route = "https://4e48f55f3e4a.ngrok-free.app/payment/pix/pushinpay";
+            String route = "https://api.faturium.com.br/api/v1/payment/pix/pushinpay";
             log.info(pushinRequest.getPrice().toString());
             OkHttpClient client = new OkHttpClient().newBuilder()
                     .build();

@@ -6,6 +6,7 @@ import com.faturium.domain.model.*;
 import com.faturium.domain.repository.OrganizacaoRepository;
 import com.faturium.domain.repository.UserRepository;
 import com.faturium.dto.OrgUserDTO;
+import com.faturium.dto.UpdateUserDTO;
 import com.faturium.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +29,10 @@ public class UserService {
     private final OrganizacaoRepository organizacaoRepository;
     private final OrganizationSubscriptionService organizationSubscriptionService;
 
-    //cria usuario principal (admin), junto com a criação da organização.
+    // cria usuario principal (admin), junto com a criação da organização.
     @Transactional
-    public UserDTO salvarUser(UserDTO userDTO){
-        if(userRepository.existsByLogin(userDTO.getUsername()))
+    public UserDTO salvarUser(UserDTO userDTO) {
+        if (userRepository.existsByLogin(userDTO.getUsername()))
             throw new AppException("Email já cadastrado.", "Tente novamente", HttpStatus.CONFLICT);
 
         if (organizacaoRepository.existsByCnpj(userDTO.getCnpj())) {
@@ -51,7 +52,6 @@ public class UserService {
                 .dataAlteracao(LocalDateTime.now())
                 .build();
         organizacaoRepository.save(organizacao);
-
 
         var user = User.builder()
                 .senha(passwordEncoder.encode(userDTO.getPassword()))
@@ -80,17 +80,16 @@ public class UserService {
                 .build();
     }
 
-    //cria novo usuario dentro da organização
+    // cria novo usuario dentro da organização
     @Transactional
-    public UserDTO salvarColaborador(UserDTO userDTO){
-        if(!organizationSubscriptionService.canOrganizationAddUser(SecurityUtils.obterOrganizacaoId())){
+    public UserDTO salvarColaborador(UserDTO userDTO) {
+        if (!organizationSubscriptionService.canOrganizationAddUser(SecurityUtils.obterOrganizacaoId())) {
             throw new AppException(
                     "Limite de Usuários atingido",
                     "Faça o upgrade do seu plano para adicionar mais usuários",
-                    HttpStatus.CONFLICT
-            );
+                    HttpStatus.CONFLICT);
         }
-        if(userRepository.existsByLogin(userDTO.getUsername()))
+        if (userRepository.existsByLogin(userDTO.getUsername()))
             throw new AppException("Email já cadastrado", "Tente novamente", HttpStatus.CONFLICT);
 
         var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
@@ -124,11 +123,11 @@ public class UserService {
                 .build();
     }
 
-    //busca credenciais do usuário autenticado para login.
+    // busca credenciais do usuário autenticado para login.
     @Transactional(readOnly = true)
-    public OrgUserDTO getUserInfo(){
+    public OrgUserDTO getUserInfo() {
         var user = userRepository.findByLogin(SecurityUtils.getEmail())
-                .orElseThrow(() -> new AppException("Usuário não encontrado","Login Inválido", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new AppException("Usuário não encontrado", "Login Inválido", HttpStatus.NOT_FOUND));
 
         var organizacao = organizacaoRepository.findByIdOrg(SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Organização não encontrada",
@@ -154,9 +153,9 @@ public class UserService {
                 .build();
     }
 
-    //busca todos os usuarios da organização
+    // busca todos os usuarios da organização
     @Transactional(readOnly = true)
-    public List<OrgUserDTO> getAllOrganizationUsers(Pageable pageable){
+    public List<OrgUserDTO> getAllOrganizationUsers(Pageable pageable) {
         return userRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream()
                 .map(user -> OrgUserDTO.builder()
                         .id(user.getId())
@@ -166,36 +165,48 @@ public class UserService {
                         .status(user.getStatus())
                         .dataCriacao(user.getDataCriacao())
                         .dataAlteracao(user.getDataAlteracao())
-                        .build()).toList();
+                        .build())
+                .toList();
     }
 
     // permite alterar senha e nome do usuário
     @Transactional
-    public UserDTO updateUser(UserDTO userDTO){
-        if(userDTO.getUsername() == null){
+    public UpdateUserDTO updateUser(UpdateUserDTO userDTO) {
+        if (userDTO.getUsername() == null) {
             throw new AppException("Usuário inexistente", "Email inválido", HttpStatus.BAD_REQUEST);
         }
 
-        if(!userDTO.getUsername().equals(SecurityUtils.getEmail()) || !SecurityUtils.isAdmin()){
+        if (!userDTO.getUsername().equals(SecurityUtils.getEmail()) || !SecurityUtils.isAdmin()) {
             throw new AppException("Operação não permitida",
                     "O usuário não possui permissão para modificar os dados de usuários",
                     HttpStatus.FORBIDDEN);
         }
 
-        var user = userRepository.findByLoginAndOrganizacaoIdOrg(userDTO.getUsername(), SecurityUtils.obterOrganizacaoId())
+        var user = userRepository
+                .findByLoginAndOrganizacaoIdOrg(userDTO.getUsername(), SecurityUtils.obterOrganizacaoId())
                 .orElseThrow(() -> new AppException("Usuário não encontrado",
-                                "Email inválido",
-                                HttpStatus.NOT_FOUND));
+                        "Email inválido",
+                        HttpStatus.NOT_FOUND));
 
-        if(userDTO.getNome() != null && !userDTO.getNome().isEmpty()){
+        if (userDTO.getNome() != null && !userDTO.getNome().isEmpty()) {
             user.setNome(userDTO.getNome());
         }
 
-        if(userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()){
-            user.setSenha(passwordEncoder.encode(user.getSenha()));
+        if (userDTO.getNewPassword() != null && !userDTO.getNewPassword().isEmpty()) {
+            if(userDTO.getPassword() == null || userDTO.getPassword().isEmpty()){
+                throw new AppException("Senha atual obrigatória",
+                        "Informe a senha atual para alterar a senha",
+                        HttpStatus.BAD_REQUEST);
+            }
+            if(!passwordEncoder.matches(userDTO.getPassword(), user.getSenha())){
+                throw new AppException("Senha atual incorreta",
+                        "A senha atual informada está incorreta",
+                        HttpStatus.UNAUTHORIZED);
+            }
+            user.setSenha(passwordEncoder.encode(userDTO.getNewPassword()));
         }
 
-        if(userDTO.getPerfilAcesso() != null && SecurityUtils.isAdmin()){
+        if (userDTO.getPerfilAcesso() != null && SecurityUtils.isAdmin()) {
             user.setPerfilAcesso(userDTO.getPerfilAcesso());
         }
 
@@ -203,19 +214,16 @@ public class UserService {
 
         userRepository.save(user);
 
-        return UserDTO.builder()
+        return UpdateUserDTO.builder()
                 .id(user.getId())
                 .nome(user.getNome())
                 .username(user.getUsername())
                 .perfilAcesso(user.getPerfilAcesso())
-                .status(user.getStatus())
-                .dataCriacao(user.getDataCriacao())
-                .dataAlteracao(user.getDataAlteracao())
                 .build();
     }
 
-    public User createGoogleUser(String email, String sub, String name){
-        if(userRepository.existsByLogin(email))
+    public User createGoogleUser(String email, String sub, String name) {
+        if (userRepository.existsByLogin(email))
             throw new AppException("Email já cadastrado.", "Tente novamente", HttpStatus.CONFLICT);
         var user = User.builder()
                 .login(email)
@@ -232,7 +240,7 @@ public class UserService {
         return user;
     }
 
-    public User completeProfile(UserDTO userDTO){
+    public User completeProfile(UserDTO userDTO) {
         var user = userRepository.findById(userDTO.getId())
                 .orElseThrow(() -> new AppException("Usuário não encontrado",
                         "Email inválido",

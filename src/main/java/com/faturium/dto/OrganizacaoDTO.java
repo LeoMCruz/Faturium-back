@@ -1,6 +1,7 @@
 package com.faturium.dto;
 
 import com.faturium.domain.model.Status;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,12 +16,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrganizacaoDTO {
-    private UUID id;
     private String nomeOrganizacao;
     private UUID idOrg;
-    private String cnpj;
-    private Set<UserDTO> usuarios;
-    private Status status;
-    private LocalDateTime dataCriacao;
-    private LocalDateTime dataAlteracao;
+    private String endereco;
+    private String cidade;
+    private String estado;
+    private String telefone;
+    private LocalDateTime dataAltercao;
 }

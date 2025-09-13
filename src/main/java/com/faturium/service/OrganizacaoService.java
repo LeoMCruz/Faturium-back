@@ -1,9 +1,11 @@
 package com.faturium.service;
 
+import com.faturium.config.exception.AppException;
 import com.faturium.domain.model.Organizacao;
 import com.faturium.domain.repository.OrganizacaoRepository;
 import com.faturium.dto.OrganizacaoDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,23 +16,35 @@ public class OrganizacaoService {
 
     @Transactional
     public OrganizacaoDTO atualizarOrganizacao(OrganizacaoDTO organizacaoDTO){
-        var organizacao = Organizacao.builder()
-                .idOrg(organizacaoDTO.getId())
-                .nomeOrganizacao(organizacaoDTO.getNomeOrganizacao())
-                .idOrg(organizacaoDTO.getIdOrg())
-                .status(organizacaoDTO.getStatus())
-                .cnpj(organizacaoDTO.getCnpj())
-                .build();
+        var organizacao = organizacaoRepository.findByIdOrg(organizacaoDTO.getIdOrg()).orElseThrow( () -> new AppException(
+                "ID inválido",
+                "Organização não encontrada",
+                HttpStatus.BAD_REQUEST
+        ));
+
+        if(organizacaoDTO.getNomeOrganizacao() != null && !organizacaoDTO.getNomeOrganizacao().isEmpty()) {
+            organizacao.setNomeOrganizacao(organizacaoDTO.getNomeOrganizacao());
+        }
+        if(organizacaoDTO.getEstado() != null && !organizacaoDTO.getEstado().isEmpty()){
+            organizacao.setEstado(organizacaoDTO.getEstado());
+        }
+        if(organizacaoDTO.getCidade() != null && !organizacaoDTO.getCidade().isEmpty()){
+            organizacao.setCidade(organizacaoDTO.getCidade());
+        }
+        if(organizacaoDTO.getEndereco() != null && !organizacaoDTO.getEndereco().isEmpty()){
+            organizacao.setEndereco(organizacaoDTO.getEndereco());
+        }
+        if(organizacaoDTO.getTelefone() != null && !organizacaoDTO.getTelefone().isEmpty()){
+            organizacao.setTelefone(organizacaoDTO.getTelefone());
+        }
         organizacaoRepository.save(organizacao);
-        return organizacaoDTO;
+        return OrganizacaoDTO.builder()
+                .nomeOrganizacao(organizacao.getNomeOrganizacao())
+                .telefone(organizacao.getTelefone())
+                .estado(organizacao.getEstado())
+                .cidade(organizacao.getCidade())
+                .endereco(organizacao.getEndereco())
+                .build();
     }
-//
-//    public Long idOrgRand (){
-//        Long randId;
-//        do {
-//            randId = ThreadLocalRandom.current().nextLong(1, 100001);
-//        } while (organizacaoRepository.existsByIdOrg(randId));
-//        return randId;
-//    }
 
 }

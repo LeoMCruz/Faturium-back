@@ -1,6 +1,7 @@
 package com.faturium.rest;
 
 import com.faturium.dto.OrgUserDTO;
+import com.faturium.dto.UpdateUserDTO;
 import com.faturium.dto.UserDTO;
 import com.faturium.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ROLE_DEFAULT')")
     @PutMapping(value = "/user", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> updateUser(@RequestBody UserDTO userDTO){
+    public ResponseEntity<?> updateUser(@RequestBody UpdateUserDTO userDTO){
         return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(userDTO));
     }
 }
