@@ -23,4 +23,5 @@ public class ServicoDTO {
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
+    private String code;
 }

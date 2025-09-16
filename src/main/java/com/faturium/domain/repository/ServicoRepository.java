@@ -12,4 +12,7 @@ public interface ServicoRepository extends PertenceOrganizacaoRespository<Servic
             "e.organizacao.idOrg = :organizacaoId and e.status = com.faturium.domain.model.Status.ATIVO " +
             " and e.nomeServico like :search")
     List<Servico> findByName(UUID organizacaoId, String search, Pageable pageable);
+
+    @Query("SELECT MAX(p.code) FROM Servico p where p.organizacao.idOrg = :organizacaoId")
+    Long findMaxIdServico(UUID organizacaoId);
 }

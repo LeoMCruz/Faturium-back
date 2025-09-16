@@ -1,6 +1,7 @@
 package com.faturium.dto;
 
 import com.faturium.domain.model.Status;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,4 +24,5 @@ public class ProdutoDTO {
     private Status status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAlteracao;
+    private String code;
 }

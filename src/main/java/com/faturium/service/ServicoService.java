@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class ServicoService {
     private final ServicoRepository servicoRepository;
     private final OrganizacaoRepository organizacaoRepository;
+    private final CodeGenerator codeGenerator;
 //    private final RedisService redisService;
 
     @Transactional
@@ -33,8 +34,12 @@ public class ServicoService {
                         "ID de organização inválido",
                         HttpStatus.NOT_FOUND));
 
+        var code = codeGenerator.gerarProximoIdServico(SecurityUtils.obterOrganizacaoId());
+
         var servico = Servico.builder()
                 .id(servicoDTO.getId())
+                .code(code)
+                .prefix("SR")
                 .nomeServico(servicoDTO.getNomeServico())
                 .descricao(servicoDTO.getDescricao())
                 .precoBase(servicoDTO.getPrecoBase())
@@ -49,6 +54,7 @@ public class ServicoService {
 
         return ServicoDTO.builder()
                 .id(servico.getId())
+                .code(codeGenerator.getCodigoCompleto(servico.getPrefix(), servico.getCode()))
                 .nomeServico(servico.getNomeServico())
                 .descricao(servico.getDescricao())
                 .precoBase(servico.getPrecoBase())
@@ -66,6 +72,7 @@ public class ServicoService {
             return servicoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(
                     servico -> ServicoDTO.builder()
                             .id(servico.getId())
+                            .code(codeGenerator.getCodigoCompleto(servico.getPrefix(), servico.getCode()))
                             .nomeServico(servico.getNomeServico())
                             .descricao(servico.getDescricao())
                             .precoBase(servico.getPrecoBase())
@@ -84,6 +91,7 @@ public class ServicoService {
         return servicoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery, pageable).stream().map(
                 servico -> ServicoDTO.builder()
                         .id(servico.getId())
+                        .code(codeGenerator.getCodigoCompleto(servico.getPrefix(), servico.getCode()))
                         .nomeServico(servico.getNomeServico())
                         .descricao(servico.getDescricao())
                         .precoBase(servico.getPrecoBase())
@@ -132,6 +140,7 @@ public class ServicoService {
 
         return ServicoDTO.builder()
                 .id(servico.getId())
+                .code(codeGenerator.getCodigoCompleto(servico.getPrefix(), servico.getCode()))
                 .nomeServico(servico.getNomeServico())
                 .descricao(servico.getDescricao())
                 .status(servico.getStatus())

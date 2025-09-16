@@ -8,6 +8,7 @@ import com.faturium.domain.repository.OrganizacaoRepository;
 import com.faturium.domain.repository.ProdutoRepository;
 import com.faturium.dto.ProdutoDTO;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.apache.bcel.classfile.Code;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final OrganizacaoRepository organizacaoRepository;
+    private final CodeGenerator codeGenerator;
 //    private final RedisService redisService;
 
     @Transactional
@@ -33,8 +35,12 @@ public class ProdutoService {
                         "ID de organização inválido",
                         HttpStatus.NOT_FOUND));
 
+        var code = codeGenerator.gerarProximoIdProduto(SecurityUtils.obterOrganizacaoId());
+
         var produto = Produto.builder()
                 .id(produtoDTO.getId())
+                .code(code)
+                .prefix("PR")
                 .nomeProduto(produtoDTO.getNomeProduto())
                 .descricao(produtoDTO.getDescricao())
                 .precoBase(produtoDTO.getPrecoBase())
@@ -49,6 +55,7 @@ public class ProdutoService {
 
         return ProdutoDTO.builder()
                 .id(produto.getId())
+                .code(codeGenerator.getCodigoCompleto(produto.getPrefix(), produto.getCode()))
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())
@@ -66,6 +73,7 @@ public class ProdutoService {
         if(search == null || search.isEmpty()) {
             return produtoRepository.findAll(SecurityUtils.obterOrganizacaoId(), pageable).stream().map(produto -> ProdutoDTO.builder()
                     .id(produto.getId())
+                    .code(codeGenerator.getCodigoCompleto(produto.getPrefix(), produto.getCode()))
                     .nomeProduto(produto.getNomeProduto())
                     .descricao(produto.getDescricao())
                     .precoBase(produto.getPrecoBase())
@@ -78,6 +86,7 @@ public class ProdutoService {
         var searchForQuery = "%"+search+"%";
         return produtoRepository.findByName(SecurityUtils.obterOrganizacaoId(), searchForQuery, pageable).stream().map(produto -> ProdutoDTO.builder()
                 .id(produto.getId())
+                .code(codeGenerator.getCodigoCompleto(produto.getPrefix(), produto.getCode()))
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())
@@ -132,6 +141,7 @@ public class ProdutoService {
 
         return ProdutoDTO.builder()
                 .id(produto.getId())
+                .code(codeGenerator.getCodigoCompleto(produto.getPrefix(), produto.getCode()))
                 .nomeProduto(produto.getNomeProduto())
                 .descricao(produto.getDescricao())
                 .precoBase(produto.getPrecoBase())

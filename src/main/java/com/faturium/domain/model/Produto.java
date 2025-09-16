@@ -34,4 +34,8 @@ public class Produto implements PertenceOrganizacao {
     private LocalDateTime dataCriacao;
     @Column
     private LocalDateTime dataAlteracao;
+    @Column(nullable = false, updatable = false)
+    private Long code;
+    @Column(nullable = false, updatable = false)
+    private String prefix;
 }

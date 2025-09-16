@@ -12,4 +12,7 @@ public interface ProdutoRepository extends PertenceOrganizacaoRespository<Produt
             "e.organizacao.idOrg = :organizacaoId and e.status = com.faturium.domain.model.Status.ATIVO " +
             " and e.nomeProduto like :search")
     List<Produto> findByName(UUID organizacaoId, String search, Pageable pageable);
+
+    @Query("SELECT MAX(p.code) FROM Produto p where p.organizacao.idOrg = :organizacaoId")
+    Long findMaxIdProduto(UUID organizacaoId);
 }
